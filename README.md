@@ -22,10 +22,6 @@ This tool focuses on using `yt-dlp` for stream information extraction, ensuring 
 * [FFmpeg](https://ffmpeg.org/) (Required for merging video/audio)
 * [deno](https://deno.com/) Required for yt-dlp
 
-### Optional
-
-* [chat-downloader](https://github.com/xenova/chat-downloader) - For robust chat downloading with resume capabilities.
-
 ## Installation
 
 ```bash
