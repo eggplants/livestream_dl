@@ -1,31 +1,25 @@
-
+import ctypes
 import logging
 import logging.handlers
-
-from typing import Union, Optional
-
 import os
-
-import os
-import logging
-from typing import Union
 
 # Verbose setup
 VERBOSE_LEVEL_NUM = 15
 VERBOSE_LEVEL_NAME = "VERBOSE"
 ENV_DISABLE_FLAG = "DISABLE_LIVESTREAM_DL_VERBOSE_LOGGING"
 
+
 def setup_logging(
     log_level="INFO",
     console=True,
     file: str | None = None,
     force=False,
-    file_options: dict = None,
+    file_options=None,
     logger: logging.Logger | None = None,
     logger_name: str | None = None,
     video_id: str | None = None,
-    metadata: dict | None = None  # New parameter for dynamic stages
-) -> Union[logging.Logger, logging.LoggerAdapter]:
+    metadata: dict | None = None,  # New parameter for dynamic stages
+) -> logging.Logger | logging.LoggerAdapter:
     """
     Configure logging with dynamic stages based on metadata.
     """
@@ -33,14 +27,14 @@ def setup_logging(
     metadata = metadata or {}
 
     # Standard Windows console fix
-    def disable_quick_edit():
-        import ctypes
-        kernel32 = ctypes.windll.kernel32
-        hStdin = kernel32.GetStdHandle(-10)
-        mode = ctypes.c_ulong()
-        kernel32.GetConsoleMode(hStdin, ctypes.byref(mode))
-        mode.value &= ~0x40
-        kernel32.SetConsoleMode(hStdin, mode)
+    def disable_quick_edit() -> None:
+        if hasattr(ctypes, "windll"):
+            kernel32 = ctypes.windll.kernel32  # type: ignore[attr-defined]
+            hStdin = kernel32.GetStdHandle(-10)
+            mode = ctypes.c_ulong()
+            kernel32.GetConsoleMode(hStdin, ctypes.byref(mode))
+            mode.value &= ~0x40
+            kernel32.SetConsoleMode(hStdin, mode)
 
     if os.name == "nt":
         disable_quick_edit()
@@ -51,7 +45,7 @@ def setup_logging(
     if force:
         for h in list(logger.handlers):
             logger.removeHandler(h)
-    
+
     if not logger.handlers:
         level = getattr(logging, log_level.upper(), logging.INFO)
         logger.setLevel(level)
@@ -65,15 +59,15 @@ def setup_logging(
             format_parts.append("%(video_id)s")
 
         # 2. Map dictionary keys to [key] stages
-        for key in metadata.keys():
+        for key in metadata:
             format_parts.append(f"%({key})s")
 
         # Join parts with brackets and add timestamp/message
         # Result example: "[INFO] [VID123] [Stage1] [UserA] 2024-..."
         fmt_prefix = " ".join([f"[{p}]" for p in format_parts])
         fmt_str = f"{fmt_prefix} %(asctime)s - %(message)s"
-            
-        formatter = logging.Formatter(fmt_str, datefmt='%Y-%m-%d %H:%M:%S')
+
+        formatter = logging.Formatter(fmt_str, datefmt="%Y-%m-%d %H:%M:%S")
 
         if logger_name:
             logger.propagate = False
@@ -86,19 +80,27 @@ def setup_logging(
         if file:
             # (File handler logic remains the same...)
             if file_options.get("maxBytes"):
+                max_bytes = file_options.get("maxBytes")
+                assert isinstance(max_bytes, int)
                 handler = logging.handlers.RotatingFileHandler(
-                    file, maxBytes=file_options.get("maxBytes"), 
-                    backupCount=file_options.get("backupCount", 5), encoding='utf-8'
+                    file,
+                    maxBytes=max_bytes,
+                    backupCount=file_options.get("backupCount", 5),
+                    encoding="utf-8",
                 )
             elif file_options.get("when"):
+                when_value = file_options.get("when")
+                assert isinstance(when_value, str)
                 handler = logging.handlers.TimedRotatingFileHandler(
-                    file, when=file_options.get("when"), 
-                    interval=file_options.get("interval", 1), 
-                    backupCount=file_options.get("backupCount", 7), encoding='utf-8'
+                    file,
+                    when=when_value,
+                    interval=file_options.get("interval", 1),
+                    backupCount=file_options.get("backupCount", 7),
+                    encoding="utf-8",
                 )
             else:
-                handler = logging.FileHandler(file, mode='a', encoding='utf-8')
-            
+                handler = logging.FileHandler(file, mode="a", encoding="utf-8")
+
             handler.setFormatter(formatter)
             logger.addHandler(handler)
 
@@ -107,21 +109,21 @@ def setup_logging(
         extra_info = {}
         if video_id:
             extra_info["video_id"] = video_id
-        
+
         # Merge the metadata dictionary into the extra info
         extra_info.update(metadata)
-        
+
         return logging.LoggerAdapter(logger, extra_info)
-    
+
     return logger
 
 
-def _install_verbose():
+def _install_verbose() -> None:
     """
-    Registers the VERBOSE level. 
+    Registers the VERBOSE level.
     Ensures idempotency (only runs once) and respects environment variables.
     """
-    
+
     # Check environment variable
     if os.getenv(ENV_DISABLE_FLAG, "false").lower() == "true":
         return
@@ -132,23 +134,24 @@ def _install_verbose():
 
     # Add the name to the logging system
     logging.addLevelName(VERBOSE_LEVEL_NUM, VERBOSE_LEVEL_NAME)
-    
+
     # Add a constant to the logging module (e.g., logging.VERBOSE)
     setattr(logging, VERBOSE_LEVEL_NAME, VERBOSE_LEVEL_NUM)
 
     # 3. Define the Logger method: logger.verbose(...)
-    def verbose_method(self, message, *args, **kws):
+    def verbose_method(self, message, *args, **kws) -> None:
         if self.isEnabledFor(VERBOSE_LEVEL_NUM):
             self._log(VERBOSE_LEVEL_NUM, message, args, **kws)
 
     # 4. Define the Global function: logging.verbose(...)
-    def verbose_global(message, *args, **kws):
+    def verbose_global(message, *args, **kws) -> None:
         """Log a message with severity 'VERBOSE' on the root logger."""
         logging.log(VERBOSE_LEVEL_NUM, message, *args, **kws)
 
     # 5. Apply the patches
-    logging.Logger.verbose = verbose_method
-    logging.verbose = verbose_global
+    logging.Logger.verbose = verbose_method  # type: ignore[attr-defined]
+    logging.verbose = verbose_global  # type: ignore[attr-defined]
+
 
 # Execute on import
 _install_verbose()

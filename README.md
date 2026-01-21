@@ -20,56 +20,52 @@ This tool focuses on using `yt-dlp` for stream information extraction, ensuring 
 
 * [Python](https://www.python.org/) 3.12+ (Developed on 3.13)
 * [FFmpeg](https://ffmpeg.org/) (Required for merging video/audio)
-* [yt-dlp](https://github.com/yt-dlp/yt-dlp) (Must be installed via pip)
 * [deno](https://deno.com/) Required for yt-dlp
-* Dependencies listed in `requirements.txt`
 
 ### Optional
+
 * [chat-downloader](https://github.com/xenova/chat-downloader) - For robust chat downloading with resume capabilities.
 
 ## Installation
 
-1.  Clone the repository.
-2.  Install dependencies:
-    ```bash
-    pip install -U -r requirements.txt
-    ```
-3.  Ensure `ffmpeg` is in your system PATH.
-4.  Ensure `deno` is in your system PATH.
+```bash
+pip install git+https://github.com/eggplants/livearchive_dl
+```
 
 ---
 
 ## Important: Modification of yt-dlp
+
 **Note:** This step is required **only** if you want to use the default adaptive stream URLs which support private stream recovery. If you prefer not to modify files, you can use the `--dash` or `--m3u8` flags (see Options below), though these have limitations regarding recovery.
 
 To enable adaptive stream URLs that allow for private stream recovery, the `yt-dlp` youtube extractor must be modified to save formats that are usually discarded.
 
-1.  Find the location of `yt-dlp`:
+1. Find the location of `yt-dlp`:
+
     ```bash
     pip show yt-dlp
     ```
-2.  Open `yt_dlp/extractor/youtube/_video.py`.
-3.  Comment out or remove the following lines (approx line 3078):
+
+2. Open `yt_dlp/extractor/youtube/_video.py`.
+3. Comment out or remove the following lines (approx line 3078):
+
     ```python
     if fmt_stream.get('targetDurationSec'):
         continue
     ```
 
 **Linux `sed` command (As of Nov 2025):**
+
 ```bash
 sed -i "/if[[:space:]]\+fmt_stream\.get('targetDurationSec'):/,/^[[:space:]]*continue/s/^[[:space:]]*/&#/" "$(pip show yt-dlp | awk '/Location/ {print $2}')/yt_dlp/extractor/youtube/_video.py"
-
 ```
 
 ---
 
 ## Usage
 
-Execute `runner.py` with Python.
-
 ```bash
-python runner.py [OPTIONS] [VIDEO_URL_OR_ID]
-
+ldl [OPTIONS] [VIDEO_URL_OR_ID]
 ```
 
 ### Examples
@@ -77,22 +73,31 @@ python runner.py [OPTIONS] [VIDEO_URL_OR_ID]
 **Basic download:**
 
 ```bash
-python runner.py --threads 4 --dash --m3u8 --write-thumbnail --embed-thumbnail --wait-for-video "60:600" --clean-info-json --remove-ip-from-json --live-chat --resolution "best" --write-info-json --log-level "INFO" -- "[VIDEO_ID]"
-
+ldl \
+  --threads 4 \
+  --dash \
+  --m3u8 \
+  --write-thumbnail \
+  --embed-thumbnail \
+  --wait-for-video "60:600" \
+  --clean-info-json \
+  --remove-ip-from-json \
+  --live-chat \
+  --resolution "best" \
+  --write-info-json \
+  --log-level "INFO" -- "[VIDEO_ID]"
 ```
 
 **Download with live chat and embed thumbnail:**
 
 ```bash
-python runner.py --live-chat --threads 4 --embed-thumbnail VIDEO_ID
-
+ldl --live-chat --threads 4 --embed-thumbnail VIDEO_ID
 ```
 
 **Monitor a channel for streams:**
 
 ```bash
-python runner.py --monitor-channel --threads 4 --dash --m3u8 --wait-for-video 60 CHANNEL_ID
-
+ldl --monitor-channel --threads 4 --dash --m3u8 --wait-for-video 60 CHANNEL_ID
 ```
 
 ---
@@ -191,8 +196,8 @@ python runner.py --monitor-channel --threads 4 --dash --m3u8 --wait-for-video 60
 
 ### Full options
 
-```
-
+```shellsession
+$ ldl --help
 usage: runner.py [-h] [--resolution RESOLUTION] [--custom-sort CUSTOM_SORT] [--threads THREADS] [--batch-size BATCH_SIZE] [--segment-retries SEGMENT_RETRIES] [--no-merge] [--merge] [--cookies COOKIES] [--output OUTPUT] [--ext EXT] [--temp-folder TEMP_FOLDER] [--write-thumbnail] [--embed-thumbnail]      
                  [--write-info-json] [--write-description] [--keep-temp-files] [--keep-ts-files] [--live-chat] [--keep-database-file] [--recovery] [--force-recover-merge] [--recovery-failure-tolerance RECOVERY_FAILURE_TOLERANCE] [--wait-limit WAIT_LIMIT] [--database-in-memory] [--direct-to-ts]
                  [--wait-for-video WAIT_FOR_VIDEO] [--json-file JSON_FILE] [--remove-ip-from-json] [--clean-urls] [--clean-info-json] [--log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}] [--no-console] [--log-file LOG_FILE] [--write-ffmpeg-command] [--stats-as-json] [--ytdlp-options YTDLP_OPTIONS] [--dash]
@@ -306,5 +311,3 @@ In the SQLite method, the existence of a downloaded segment is checked before it
 * **Concurrent Futures:** The downloader uses `concurrent.futures` for thread management. While robust, stopping the downloader gracefully (e.g., via Keyboard Interrupt) can sometimes be delayed if a thread is stuck on a request.
 * **Stream Recovery:** This feature is currently in a "semi-broken" state and may not work reliably for all stream types.
 * **Chat Downloader:** The `chat-downloader` dependency occasionally breaks due to YouTube updates; the tool may fall back to `yt-dlp` for chat extraction which has different output formatting.
-
-

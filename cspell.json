@@ -1,0 +1,25 @@
+{
+  "language": "en_US",
+  "words": [
+    "asyncio",
+    "pdoc",
+    "pymarkdownlnt",
+    "pyproject",
+    "pytest"
+  ],
+  "dictionaries": [
+    "companies",
+    "markdown",
+    "misc",
+    "softwareTerms",
+    "useCompounds"
+  ],
+  "ignorePaths": [
+    ".gitignore",
+    ".cspell.json"
+  ],
+  "features": {
+    "weighted-suggestions": true
+  },
+  "useGitignore": true
+}

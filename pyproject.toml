@@ -1,0 +1,86 @@
+[build-system]
+build-backend = "hatchling.build"
+requires = [ "hatchling", "uv-dynamic-versioning" ]
+
+[project]
+name = "livestream-dl"
+description = "Garbage youtube livestream downloader"
+readme = "README.md"
+keywords = [ "download" ]
+license = { text = "NoneLicense" }
+maintainers = [ { name = "eggplants", email = "w10776e8w@yahoo.co.jp" } ]
+authors = [ { name = "Alex Mckenzie-Hicks", email = "github@canofsocks.com" } ]
+requires-python = ">=3.10,<4"
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Typing :: Typed",
+]
+dynamic = [ "version" ]
+dependencies = [
+  "httpx>=0.28.1",
+  "urllib3>=2.6.3",
+  "yt-dlp>=2025.12.8",
+]
+
+urls.repository = "https://github.com/eggplants/livestream_dl"
+scripts.ldl = "livestream_dl.main:main"
+
+[dependency-groups]
+dev = [
+  "pymarkdownlnt>=0.9.33",
+  "pyproject-fmt>=2.11.1",
+  "pytest>=9.0.2",
+  "pytest-asyncio>=1.3",
+  "pytest-cov>=7",
+]
+docs = [
+  "pdoc>=16",
+]
+
+[tool.hatch.version]
+source = "uv-dynamic-versioning"
+
+[tool.hatch.build.targets.sdist]
+include = [ "livestream_dl" ]
+
+[tool.hatch.build.targets.wheel]
+include = [ "livestream_dl" ]
+
+[tool.uv]
+preview = true
+default-groups = [
+  "dev",
+  "docs",
+]
+exclude-newer = "P7D"
+
+[tool.ruff]
+line-length = 120
+format.indent-style = "space"
+format.quote-style = "double"
+lint.select = [
+  "ALL",
+]
+lint.ignore = [
+  "COM812",
+  "D",
+
+  "D203",
+  "D213",
+]
+lint.per-file-ignores."tests/test_*.py" = [
+  "D",
+  "S101", # Use of assert detected
+]
+lint.pydocstyle.convention = "google"
+
+[tool.uv-dynamic-versioning]
+vcs = "git"
+style = "semver"
+fallback-version = "0.0.0"
