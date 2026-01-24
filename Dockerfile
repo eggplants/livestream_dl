@@ -19,4 +19,4 @@ ENV PYTHONUNBUFFERED=1
 RUN uv sync --locked --no-dev
 
 ENV PATH="/app/.venv/bin:$PATH"
-CMD ["uv", "run", "ldl"]
+CMD ["uv", "run", "ls-dlp"]

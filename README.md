@@ -1,5 +1,6 @@
+# ls-dlp
 
-# livestream_dl
+This is a forked project of [livestream_dl](https://github.com/CanOfSocks/livestream_dl).
 
 A robust YouTube livestream downloader that combines the reliability of [yt-dlp](https://github.com/yt-dlp/yt-dlp) with the fragment-based downloading principles of [ytarchive](https://github.com/Kethsar/ytarchive).
 
@@ -10,7 +11,7 @@ This tool focuses on using `yt-dlp` for stream information extraction, ensuring 
 * **Robust Downloading:** Uses `yt-dlp` for extraction, minimizing breakage from YouTube updates.
 * **Stream Recovery:** capable of recovering streams that go private during recording (requires specific configuration).
 * **Dual Write Modes:** Supports both direct `.ts` file writing (low disk IO) and SQLite-backed downloading (safer for unstable connections).
-* **Live Chat:** Integrated support for downloading live chat (via `yt-dlp` or `chat-downloader`) and bundling it into a ZIP file.
+* **Live Chat:** Integrated support for downloading live chat (via `yt-dlp`) and bundling it into a ZIP file.
 * **Channel Monitoring:** Automated monitoring of channels for upcoming or live streams.
 * **Protocol Fallbacks:** Optional support for DASH and HLS (m3u8) protocols to avoid modifying `yt-dlp` source code.
 
@@ -28,40 +29,10 @@ This tool focuses on using `yt-dlp` for stream information extraction, ensuring 
 pip install git+https://github.com/eggplants/livearchive_dl
 ```
 
----
-
-## Important: Modification of yt-dlp
-
-**Note:** This step is required **only** if you want to use the default adaptive stream URLs which support private stream recovery. If you prefer not to modify files, you can use the `--dash` or `--m3u8` flags (see Options below), though these have limitations regarding recovery.
-
-To enable adaptive stream URLs that allow for private stream recovery, the `yt-dlp` youtube extractor must be modified to save formats that are usually discarded.
-
-1. Find the location of `yt-dlp`:
-
-    ```bash
-    pip show yt-dlp
-    ```
-
-2. Open `yt_dlp/extractor/youtube/_video.py`.
-3. Comment out or remove the following lines (approx line 3078):
-
-    ```python
-    if fmt_stream.get('targetDurationSec'):
-        continue
-    ```
-
-**Linux `sed` command (As of Nov 2025):**
-
-```bash
-sed -i "/if[[:space:]]\+fmt_stream\.get('targetDurationSec'):/,/^[[:space:]]*continue/s/^[[:space:]]*/&#/" "$(pip show yt-dlp | awk '/Location/ {print $2}')/yt_dlp/extractor/youtube/_video.py"
-```
-
----
-
 ## Usage
 
 ```bash
-ldl [OPTIONS] [VIDEO_URL_OR_ID]
+ls-dlp [OPTIONS] [VIDEO_URL_OR_ID]
 ```
 
 ### Examples
@@ -69,7 +40,7 @@ ldl [OPTIONS] [VIDEO_URL_OR_ID]
 **Basic download:**
 
 ```bash
-ldl \
+ls-dlp \
   --threads 4 \
   --dash \
   --m3u8 \
@@ -87,13 +58,13 @@ ldl \
 **Download with live chat and embed thumbnail:**
 
 ```bash
-ldl --live-chat --threads 4 --embed-thumbnail VIDEO_ID
+ls-dlp --live-chat --threads 4 --embed-thumbnail VIDEO_ID
 ```
 
 **Monitor a channel for streams:**
 
 ```bash
-ldl --monitor-channel --threads 4 --dash --m3u8 --wait-for-video 60 CHANNEL_ID
+ls-dlp --monitor-channel --threads 4 --dash --m3u8 --wait-for-video 60 CHANNEL_ID
 ```
 
 ---
@@ -140,7 +111,7 @@ ldl --monitor-channel --threads 4 --dash --m3u8 --wait-for-video 60 CHANNEL_ID
 | `--write-description` | `False` | Write the video description to a separate text file. |
 | `--keep-temp-files` | `False` | Keep all temporary files (database and TS files) after finishing. |
 | `--keep-ts-files` | `False` | Keep the intermediate TS files but delete the database. |
-| `--live-chat` | `False` | Download live chat (requires `yt-dlp` or `chat-downloader`). |
+| `--live-chat` | `False` | Download live chat (requires `yt-dlp`). |
 | `--stop-chat-when-done` | `300` | Max seconds to wait for chat download to finish after stream ends. |
 
 ### Database & Storage Modes
@@ -193,7 +164,7 @@ ldl --monitor-channel --threads 4 --dash --m3u8 --wait-for-video 60 CHANNEL_ID
 ### Full options
 
 ```shellsession
-$ ldl --help
+$ ls-dlp --help
 usage: runner.py [-h] [--resolution RESOLUTION] [--custom-sort CUSTOM_SORT] [--threads THREADS] [--batch-size BATCH_SIZE] [--segment-retries SEGMENT_RETRIES] [--no-merge] [--merge] [--cookies COOKIES] [--output OUTPUT] [--ext EXT] [--temp-folder TEMP_FOLDER] [--write-thumbnail] [--embed-thumbnail]      
                  [--write-info-json] [--write-description] [--keep-temp-files] [--keep-ts-files] [--live-chat] [--keep-database-file] [--recovery] [--force-recover-merge] [--recovery-failure-tolerance RECOVERY_FAILURE_TOLERANCE] [--wait-limit WAIT_LIMIT] [--database-in-memory] [--direct-to-ts]
                  [--wait-for-video WAIT_FOR_VIDEO] [--json-file JSON_FILE] [--remove-ip-from-json] [--clean-urls] [--clean-info-json] [--log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}] [--no-console] [--log-file LOG_FILE] [--write-ffmpeg-command] [--stats-as-json] [--ytdlp-options YTDLP_OPTIONS] [--dash]
@@ -306,4 +277,3 @@ In the SQLite method, the existence of a downloaded segment is checked before it
 
 * **Concurrent Futures:** The downloader uses `concurrent.futures` for thread management. While robust, stopping the downloader gracefully (e.g., via Keyboard Interrupt) can sometimes be delayed if a thread is stuck on a request.
 * **Stream Recovery:** This feature is currently in a "semi-broken" state and may not work reliably for all stream types.
-* **Chat Downloader:** The `chat-downloader` dependency occasionally breaks due to YouTube updates; the tool may fall back to `yt-dlp` for chat extraction which has different output formatting.

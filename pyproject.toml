@@ -3,7 +3,7 @@ build-backend = "hatchling.build"
 requires = [ "hatchling", "uv-dynamic-versioning" ]
 
 [project]
-name = "livestream-dl"
+name = "ls-dlp"
 description = "Garbage youtube livestream downloader"
 readme = "README.md"
 keywords = [ "download" ]
@@ -29,7 +29,7 @@ dependencies = [
 ]
 
 urls.repository = "https://github.com/eggplants/livestream_dl"
-scripts.ldl = "livestream_dl.main:main"
+scripts.ls-dlp = "livestream_dl.main:main"
 
 [dependency-groups]
 dev = [
@@ -62,6 +62,8 @@ exclude-newer = "P7D"
 
 [tool.ruff]
 line-length = 120
+fix = true
+unsafe-fixes = true
 format.indent-style = "space"
 format.quote-style = "double"
 lint.select = [
