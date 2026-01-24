@@ -1,11 +1,32 @@
 {
   "language": "en_US",
   "words": [
+    "acodec",
     "asyncio",
+    "bgutilhttp",
+    "denoland",
+    "ffprobe",
+    "fulltitle",
+    "httpx",
+    "itag",
     "pdoc",
+    "pipefail",
+    "potoken",
+    "pydocstyle",
     "pymarkdownlnt",
     "pyproject",
-    "pytest"
+    "pytest",
+    "PYTHONUNBUFFERED",
+    "remuxing",
+    "sdist",
+    "shellsession",
+    "urllib",
+    "vcodec",
+    "venv",
+    "videoplayback",
+    "youtubepot",
+    "ytarchive",
+    "ytdlp"
   ],
   "dictionaries": [
     "companies",

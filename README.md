@@ -1,17 +1,17 @@
 # ls-dlp
 
 [![PyPI](
-  <https://img.shields.io/pypi/v/yt-dlp?color=blue>
+  <https://img.shields.io/pypi/v/ls-dlp?color=blue>
   )](
-  <https://pypi.org/project/yt-dlp/>
+  <https://pypi.org/project/ls-dlp/>
 ) [![Release Package](
-  <https://github.com/eggplants/yt-dlp/actions/workflows/release.yml/badge.svg>
+  <https://github.com/eggplants/ls-dlp/actions/workflows/release.yml/badge.svg>
   )](
-  <https://github.com/eggplants/yt-dlp/actions/workflows/release.yml>
+  <https://github.com/eggplants/ls-dlp/actions/workflows/release.yml>
 ) [![CI](
-  <https://github.com/eggplants/yt-dlp/actions/workflows/ci.yml/badge.svg>
+  <https://github.com/eggplants/ls-dlp/actions/workflows/ci.yml/badge.svg>
   )](
-  <https://github.com/eggplants/yt-dlp/actions/workflows/ci.yml>
+  <https://github.com/eggplants/ls-dlp/actions/workflows/ci.yml>
 )
 
 This is a forked project of [livestream_dl](https://github.com/CanOfSocks/livestream_dl).
@@ -98,9 +98,11 @@ ls-dlp --monitor-channel --threads 4 --dash --m3u8 --wait-for-video 60 CHANNEL_I
 
 ### Download & Formatting
 
+<!-- markdownlint-disable MD033 -->
+
 | Option | Default | Description |
 | --- | --- | --- |
-| `--resolution` | `best` | Desired resolution. Can be `best`, `audio_only`, or a custom [yt-dlp format filter](https://github.com/yt-dlp/yt-dlp?tab=readme-ov-file#format-selection). <br>-Audio is always set to "ba" (best audio) regardless of filters. <br>-"best" is converted to "bv". <br>-If unspecified, a prompt will appear.|
+| `--resolution` | `best` | Desired resolution. Can be `best`, `audio_only`, or a custom [yt-dlp format filter](https://github.com/yt-dlp/yt-dlp?tab=readme-ov-file#format-selection). <br>-Audio is always set to "ba" (best audio) regardless of filters. <br>-"best" is converted to "bv". <br>-If unspecified, a prompt will appear. |
 | `--custom-sort` | `None` | Custom sorting algorithm for formats based on [yt-dlp sorting syntax](https://github.com/yt-dlp/yt-dlp?tab=readme-ov-file#sorting-formats). |
 | `--threads` | `1` | Number of download threads *per format*. Total threads = this value × 2 (for video+audio). |
 | `--batch-size` | `5` | Number of segments downloaded before the temporary database is committed to disk (reduces disk IO). |
@@ -110,6 +112,8 @@ ls-dlp --monitor-channel --threads 4 --dash --m3u8 --wait-for-video 60 CHANNEL_I
 | `--force-m3u8` | `False` | Forces the use of m3u8 stream URLs. |
 | `--wait-for-video` | `None` | Wait time (int) or range (`min:max`) to wait for a video to start or become available. Refer to [yt-dlp's documentation](https://github.com/yt-dlp/yt-dlp?tab=readme-ov-file#general-options) |
 | `--ytdlp-options` | `None` | JSON string of additional `yt-dlp` options (overwrites conflicts). E.g `'{"extractor_args":{"youtubepot-bgutilhttp":{"base_url":["http://bgutil-provider:4416"]}}}'` to use Potoken retrieval. Refer to full options for more examples. |
+
+<!-- markdown-enable MD033 -->
 
 ### Processing & Output
 
@@ -183,7 +187,7 @@ usage: runner.py [-h] [--resolution RESOLUTION] [--custom-sort CUSTOM_SORT] [--t
                  [--m3u8] [--force-m3u8] [--proxy [PROXY]] [--ipv4 | --ipv6] [--stop-chat-when-done STOP_CHAT_WHEN_DONE] [--new-line] [--monitor-channel] [--members-only] [--upcoming-lookahead UPCOMING_LOOKAHEAD] [--playlist-items PLAYLIST_ITEMS]
                  [ID]
 
-Download YouTube livestreams (https://github.com/CanOfSocks/livestream_dl)
+Download YouTube livestream (https://github.com/CanOfSocks/livestream_dl)
 
 positional arguments:
   ID                    The video URL or ID
@@ -217,11 +221,11 @@ options:
   --keep-database-file  Keep database file. If using with --direct-to-ts, this keeps the state file
   --recovery            Puts downloader into stream recovery mode
   --force-recover-merge
-                        Forces merging to final file even if all segements could not be recovered
+                        Forces merging to final file even if all segments could not be recovered
   --recovery-failure-tolerance RECOVERY_FAILURE_TOLERANCE
                         Maximum number of fragments that fail to download (exceed the retry limit) and not throw an error. May cause unexpected issues when merging to .ts file and remuxing. Default: 0
   --wait-limit WAIT_LIMIT
-                        Set maximum number of wait intervals for new segments. Each wait interval is ~10s (e.g. a value of 20 would be 200s). A mimimum of value of 20 is recommended. Stream URLs are refreshed every 10 intervals. A value of 0 wait until the video moves into 'was_live' or 'post_live' status.       
+                        Set maximum number of wait intervals for new segments. Each wait interval is ~10s (e.g. a value of 20 would be 200s). A minimum of value of 20 is recommended. Stream URLs are refreshed every 10 intervals. A value of 0 wait until the video moves into 'was_live' or 'post_live' status.       
                         Default: 0
   --database-in-memory  Keep stream segments database in memory. Requires a lot of RAM (Not recommended)
   --direct-to-ts        Write directly to ts file instead of database. May use more RAM if a segment is slow to download. This overwrites most database options
@@ -280,7 +284,7 @@ For regular livestream recording that doesn't experience frequent segment downlo
 ### SQLite
 
 The SQLite downloader method is used to improve handling of non-sequential successful segment downloads. This works by creating and using a basic table of the segment number as an ID and a blob to store the segment data. Once all segments are downloaded, a query is executed to sort all of the downloaded segments into the correct order and saved to a .ts file. This helps significantly to manage downloaded segments when failures occur often, such as unavailable stream recovery. By writing to the database and a final .ts file, this will require 2 full writes of the downloaded data, which may increase wear on flash-based systems. For most users, this increased wear will not be significant in the long-term.
-This improves over saving individual segment files like [ytarchive-raw-go](https://www.google.com/search?q=https://github.com/Kethsar/ytarchive%5D(https://github.com/HoloArchivists/ytarchive-raw-go)) as all the downloaded segments are encapsilated into a single file, making it easier for the file system to handle.
+This improves over saving individual segment files like [ytarchive-raw-go](https://www.google.com/search?q=https://github.com/Kethsar/ytarchive%5D(https://github.com/HoloArchivists/ytarchive-raw-go)) as all the downloaded segments are encapsulated into a single file, making it easier for the file system to handle.
 In the SQLite method, the existence of a downloaded segment is checked before it is downloaded. This allows failed segments to be "looped back to" later without causing other slowdowns, and ensures some information is saved for a segment (even if it is empty, as is the case sometimes).
 
 ---

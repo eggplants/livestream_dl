@@ -16,7 +16,7 @@ from .setup_logger import setup_logging
 
 kill_all = threading.Event()
 
-# Preserve original keyboard interrupt logic as true behaviour is known
+# Preserve original keyboard interrupt logic as true behavior is known
 original_sigint = signal.getsignal(signal.SIGINT)
 
 
@@ -204,7 +204,7 @@ def monitor_channel(options=None) -> None:
 def main() -> None:
     # Create the parser
     parser = argparse.ArgumentParser(
-        description="Download YouTube livestreams (https://github.com/CanOfSocks/livestream_dl)"
+        description="Download YouTube livestream (https://github.com/CanOfSocks/livestream_dl)"
     )
 
     parser.add_argument("ID", type=str, nargs="?", default=None, help="The video URL or ID")
@@ -298,7 +298,7 @@ def main() -> None:
     parser.add_argument(
         "--force-recover-merge",
         action="store_true",
-        help="Forces merging to final file even if all segements could not be recovered",
+        help="Forces merging to final file even if all segments could not be recovered",
     )
 
     parser.add_argument(
@@ -312,7 +312,7 @@ def main() -> None:
         "--wait-limit",
         type=int,
         default=0,
-        help="Set maximum number of wait intervals for new segments. Each wait interval is ~10s (e.g. a value of 20 would be 200s). A mimimum of value of 20 is recommended. Stream URLs are refreshed every 10 intervals. A value of 0 wait until the video moves into 'was_live' or 'post_live' status. Default: 0",
+        help="Set maximum number of wait intervals for new segments. Each wait interval is ~10s (e.g. a value of 20 would be 200s). A minimum of value of 20 is recommended. Stream URLs are refreshed every 10 intervals. A value of 0 wait until the video moves into 'was_live' or 'post_live' status. Default: 0",
     )
 
     parser.add_argument(
