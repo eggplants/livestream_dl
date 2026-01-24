@@ -1,4 +1,4 @@
-from livestream_dl import __version__
+from ls_dlp import __version__
 
 
 def test_version() -> None:

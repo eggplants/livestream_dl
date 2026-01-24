@@ -39,8 +39,8 @@ dependencies = [
   "yt-dlp>=2025.12.8",
 ]
 
-urls.repository = "https://github.com/eggplants/livestream_dl"
-scripts.ls-dlp = "livestream_dl.main:main"
+urls.repository = "https://github.com/eggplants/ls_dlp"
+scripts.ls-dlp = "ls_dlp.main:main"
 
 [dependency-groups]
 dev = [
@@ -58,10 +58,10 @@ docs = [
 source = "uv-dynamic-versioning"
 
 [tool.hatch.build.targets.sdist]
-include = [ "livestream_dl" ]
+include = [ "ls_dlp" ]
 
 [tool.hatch.build.targets.wheel]
-include = [ "livestream_dl" ]
+include = [ "ls_dlp" ]
 
 [tool.uv]
 preview = true

@@ -23,7 +23,7 @@ description = "Run Pytest with coverage"
 run = """
 #!/usr/bin/env bash
 set -euxo pipefail
-uv run pytest --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov=livestream_dl tests/ | tee pytest-coverage.txt
+uv run pytest --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov=ls_dlp tests/ | tee pytest-coverage.txt
 """
 
 [tasks.build]
@@ -32,8 +32,7 @@ run = "uv build"
 
 [tasks.docs]
 description = "Generate documentation"
-run = "uv run pdoc livestream_dl -o ./docs --docformat google"
-
+run = "uv run pdoc ls_dlp -o ./docs --docformat google"
 [tasks.pyproject-fmt]
 description = "Run pyproject-fmt"
 run = "uv run pyproject-fmt ./pyproject.toml"
