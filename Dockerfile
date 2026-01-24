@@ -35,4 +35,3 @@ ENTRYPOINT [ \
     "--output", \
     "/out/%(upload_date)s_%(title)s_[%(id)s]" \
 ]
-
