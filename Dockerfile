@@ -9,6 +9,11 @@ COPY --from=linuxserver/ffmpeg:8.0.1 /usr/local/bin/ffprobe /usr/local/bin/ffpro
 
 RUN chmod +x /usr/local/bin/deno /usr/local/bin/ffmpeg /usr/local/bin/ffprobe
 
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends patch && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
 COPY . /app
 
 ENV UV_COMPILE_BYTECODE=1
@@ -18,6 +23,8 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 RUN uv sync --locked --no-dev
+
+RUN patch -u -d .venv/lib/*/site-packages/yt_dlp/extractor/youtube/ < yt-dlp.patch
 
 ENV PATH="/app/.venv/bin:$PATH"
 CMD ["uv", "run", "ls-dlp"]
