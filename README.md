@@ -33,14 +33,12 @@ This tool focuses on using `yt-dlp` for stream information extraction, ensuring 
 
 ## Requirements
 
-* [Python](https://www.python.org/) 3.12+ (Developed on 3.13)
-* [FFmpeg](https://ffmpeg.org/) (Required for merging video/audio)
-* [deno](https://deno.com/) Required for yt-dlp
+See [`Dockerfile`](./Dockerfile)
 
 ## Installation
 
 ```bash
-pip install git+https://github.com/eggplants/ls-dlp
+pip install ls-dlp
 ```
 
 ## Usage
