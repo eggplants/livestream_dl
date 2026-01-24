@@ -26,9 +26,7 @@ RUN patch -u -d .venv/lib/*/site-packages/yt_dlp/extractor/youtube/ < yt-dlp.pat
 ENV PATH="/app/.venv/bin:$PATH"
 ENTRYPOINT [ \
     "uv", "run", "ls-dlp", \
-    "--write-thumbnail", \
     "--embed-thumbnail", \
-    "--live-chat", \
     "--resolution", "best", \
     "--ytdlp-options", \
     "{\"js_runtimes\":{\"deno\":{}}}", \
