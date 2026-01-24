@@ -6,9 +6,6 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 COPY --from=denoland/deno:bin-2.5.6 /deno /usr/local/bin/deno
 COPY --from=linuxserver/ffmpeg:8.0.1 /usr/local/bin/ffmpeg /usr/local/bin/ffmpeg
 COPY --from=linuxserver/ffmpeg:8.0.1 /usr/local/bin/ffprobe /usr/local/bin/ffprobe
-
-RUN chmod +x /usr/local/bin/deno /usr/local/bin/ffmpeg /usr/local/bin/ffprobe
-
 RUN apt-get update && \
     apt-get install -y --no-install-recommends patch && \
     apt-get clean && \
@@ -27,4 +24,15 @@ RUN uv sync --locked --no-dev
 RUN patch -u -d .venv/lib/*/site-packages/yt_dlp/extractor/youtube/ < yt-dlp.patch
 
 ENV PATH="/app/.venv/bin:$PATH"
-CMD ["uv", "run", "ls-dlp"]
+ENTRYPOINT [ \
+    "uv", "run", "ls-dlp", \
+    "--write-thumbnail", \
+    "--embed-thumbnail", \
+    "--live-chat", \
+    "--resolution", "best", \
+    "--ytdlp-options", \
+    "{\"js_runtimes\":{\"deno\":{}}}", \
+    "--output", \
+    "/out/%(upload_date)s_%(title)s_[%(id)s]" \
+]
+
