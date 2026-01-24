@@ -1,5 +1,19 @@
 # ls-dlp
 
+[![PyPI](
+  <https://img.shields.io/pypi/v/yt-dlp?color=blue>
+  )](
+  <https://pypi.org/project/yt-dlp/>
+) [![Release Package](
+  <https://github.com/eggplants/yt-dlp/actions/workflows/release.yml/badge.svg>
+  )](
+  <https://github.com/eggplants/yt-dlp/actions/workflows/release.yml>
+) [![CI](
+  <https://github.com/eggplants/yt-dlp/actions/workflows/ci.yml/badge.svg>
+  )](
+  <https://github.com/eggplants/yt-dlp/actions/workflows/ci.yml>
+)
+
 This is a forked project of [livestream_dl](https://github.com/CanOfSocks/livestream_dl).
 
 A robust YouTube livestream downloader that combines the reliability of [yt-dlp](https://github.com/yt-dlp/yt-dlp) with the fragment-based downloading principles of [ytarchive](https://github.com/Kethsar/ytarchive).
@@ -26,7 +40,7 @@ This tool focuses on using `yt-dlp` for stream information extraction, ensuring 
 ## Installation
 
 ```bash
-pip install git+https://github.com/eggplants/livearchive_dl
+pip install git+https://github.com/eggplants/ls-dlp
 ```
 
 ## Usage
