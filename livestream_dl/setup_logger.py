@@ -29,7 +29,7 @@ def setup_logging(
     # Standard Windows console fix
     def disable_quick_edit() -> None:
         if hasattr(ctypes, "windll"):
-            kernel32 = ctypes.windll.kernel32  # type: ignore[attr-defined]
+            kernel32 = ctypes.windll.kernel32
             hStdin = kernel32.GetStdHandle(-10)
             mode = ctypes.c_ulong()
             kernel32.GetConsoleMode(hStdin, ctypes.byref(mode))

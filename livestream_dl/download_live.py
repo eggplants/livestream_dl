@@ -2802,7 +2802,7 @@ class StreamRecovery(DownloadStream):
 
         # Type narrowing: stream_urls is list[YoutubeURL] at this point
         assert isinstance(self.stream_urls, list)
-        self.stream_url = random.choice(self.stream_urls)  # type: ignore[arg-type]
+        self.stream_url = random.choice(self.stream_urls)
         self.format = self.stream_url.format_id
 
         self.logger.debug(f"Recovery - Resolution: {resolution}, Format: {self.format}")
@@ -3074,7 +3074,7 @@ class StreamRecovery(DownloadStream):
                     self.logger.debug("401s detected for {0}, sleeping for a minute")
                     time.sleep(60)
                     assert isinstance(self.stream_urls, list)
-                    for url in self.stream_urls:  # type: ignore[misc]
+                    for url in self.stream_urls:
                         if self.live_status == "post_live":
                             self.update_latest_segment(
                                 url=self.stream_url.segment(self.latest_sequence + 1), client=client
@@ -3084,7 +3084,7 @@ class StreamRecovery(DownloadStream):
 
                 elif self.is_403:
                     assert isinstance(self.stream_urls, list)
-                    for url in self.stream_urls:  # type: ignore[misc]
+                    for url in self.stream_urls:
                         if self.live_status == "post_live":
                             self.update_latest_segment(
                                 url=self.stream_url.segment(self.latest_sequence + 1), client=client
@@ -3253,7 +3253,7 @@ class StreamRecovery(DownloadStream):
 
         if url is None:
             assert isinstance(self.stream_urls, list)
-            url = random.choice(self.stream_urls)  # type: ignore[arg-type]
+            url = random.choice(self.stream_urls)
 
         stream_url_info = self.get_Headers(url, client)
         if stream_url_info is not None and stream_url_info.get("X-Head-Seqnum", None) is not None:

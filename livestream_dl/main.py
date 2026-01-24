@@ -33,7 +33,7 @@ signal.signal(signal.SIGINT, handle_shutdown)
 if platform.system() == "Windows":
     # SIGTERM won’t fire — but SIGBREAK will on Ctrl-Break
     if hasattr(signal, "SIGBREAK"):
-        signal.signal(signal.SIGBREAK, handle_shutdown)  # type: ignore[attr-defined]
+        signal.signal(signal.SIGBREAK, handle_shutdown)
 else:
     # normal POSIX termination
     signal.signal(signal.SIGTERM, handle_shutdown)
