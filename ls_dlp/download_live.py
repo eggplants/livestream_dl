@@ -612,6 +612,13 @@ class LiveStreamDownloader:
 
         self.logger.info(f"Downloading live chat to: {livechat_filename}")
 
+        # Download live chat using yt-dlp
+        with YoutubeDL(ydl_opts) as ydl:
+            try:
+                ydl.download([info_dict.get("original_url", info_dict.get("webpage_url", info_dict.get("url")))])
+            except Exception as e:
+                self.logger.exception(f"Failed to download live chat: {e}")
+
         time.sleep(1)
         part_file = f"{livechat_filename}.part"
         if os.path.exists(part_file):
@@ -623,6 +630,10 @@ class LiveStreamDownloader:
             os.remove(f"{livechat_filename}.part")
 
         try:
+            if not os.path.exists(livechat_filename):
+                self.logger.warning(f"Live chat file not found: {livechat_filename}")
+                return None, None
+
             zip_filename = base_output + ".live_chat.zip"
             with zipfile.ZipFile(
                 zip_filename, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9, allowZip64=True
