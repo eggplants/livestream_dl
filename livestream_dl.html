@@ -21,12 +21,11 @@
 
             <h2>Contents</h2>
             <ul>
-  <li><a href="#livestream_dl">livestream_dl</a>
+  <li><a href="#ls-dlp">ls-dlp</a>
   <ul>
     <li><a href="#key-features">Key Features</a></li>
     <li><a href="#requirements">Requirements</a></li>
     <li><a href="#installation">Installation</a></li>
-    <li><a href="#important-modification-of-yt-dlp">Important: Modification of yt-dlp</a></li>
     <li><a href="#usage">Usage</a></li>
     <li><a href="#command-line-options">Command Line Options</a></li>
     <li><a href="#downloader-methods">Downloader methods</a></li>
@@ -153,7 +152,9 @@
                     <h1 class="modulename">
 livestream_dl    </h1>
 
-                        <div class="docstring"><h1 id="livestream_dl">livestream_dl</h1>
+                        <div class="docstring"><h1 id="ls-dlp">ls-dlp</h1>
+
+<p>This is a forked project of <a href="https://github.com/CanOfSocks/livestream_dl">livestream_dl</a>.</p>
 
 <p>A robust YouTube livestream downloader that combines the reliability of <a href="https://github.com/yt-dlp/yt-dlp">yt-dlp</a> with the fragment-based downloading principles of <a href="https://github.com/Kethsar/ytarchive">ytarchive</a>.</p>
 
@@ -165,7 +166,7 @@ livestream_dl    </h1>
 <li><strong>Robust Downloading:</strong> Uses <code>yt-dlp</code> for extraction, minimizing breakage from YouTube updates.</li>
 <li><strong>Stream Recovery:</strong> capable of recovering streams that go private during recording (requires specific configuration).</li>
 <li><strong>Dual Write Modes:</strong> Supports both direct <code>.ts</code> file writing (low disk IO) and SQLite-backed downloading (safer for unstable connections).</li>
-<li><strong>Live Chat:</strong> Integrated support for downloading live chat (via <code>yt-dlp</code> or <code>chat-downloader</code>) and bundling it into a ZIP file.</li>
+<li><strong>Live Chat:</strong> Integrated support for downloading live chat (via <code>yt-dlp</code>) and bundling it into a ZIP file.</li>
 <li><strong>Channel Monitoring:</strong> Automated monitoring of channels for upcoming or live streams.</li>
 <li><strong>Protocol Fallbacks:</strong> Optional support for DASH and HLS (m3u8) protocols to avoid modifying <code>yt-dlp</code> source code.</li>
 </ul>
@@ -187,45 +188,10 @@ livestream_dl    </h1>
 </code></pre>
 </div>
 
-<hr />
-
-<h2 id="important-modification-of-yt-dlp">Important: Modification of yt-dlp</h2>
-
-<p><strong>Note:</strong> This step is required <strong>only</strong> if you want to use the default adaptive stream URLs which support private stream recovery. If you prefer not to modify files, you can use the <code>--dash</code> or <code>--m3u8</code> flags (see Options below), though these have limitations regarding recovery.</p>
-
-<p>To enable adaptive stream URLs that allow for private stream recovery, the <code>yt-dlp</code> youtube extractor must be modified to save formats that are usually discarded.</p>
-
-<ol>
-<li><p>Find the location of <code>yt-dlp</code>:</p>
-
-<div class="pdoc-code codehilite">
-<pre><span></span><code>pip<span class="w"> </span>show<span class="w"> </span>yt-dlp
-</code></pre>
-</div></li>
-
-<li><p>Open <code>yt_dlp/extractor/youtube/_video.py</code>.</p></li>
-<li><p>Comment out or remove the following lines (approx line 3078):</p>
-
-<div class="pdoc-code codehilite">
-<pre><span></span><code><span class="k">if</span> <span class="n">fmt_stream</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;targetDurationSec&#39;</span><span class="p">):</span>
-    <span class="k">continue</span>
-</code></pre>
-</div></li>
-</ol>
-
-<p><strong>Linux <code>sed</code> command (As of Nov 2025):</strong></p>
-
-<div class="pdoc-code codehilite">
-<pre><span></span><code>sed<span class="w"> </span>-i<span class="w"> </span><span class="s2">&quot;/if[[:space:]]\+fmt_stream\.get(&#39;targetDurationSec&#39;):/,/^[[:space:]]*continue/s/^[[:space:]]*/&amp;#/&quot;</span><span class="w"> </span><span class="s2">&quot;</span><span class="k">$(</span>pip<span class="w"> </span>show<span class="w"> </span>yt-dlp<span class="w"> </span><span class="p">|</span><span class="w"> </span>awk<span class="w"> </span><span class="s1">&#39;/Location/ {print $2}&#39;</span><span class="k">)</span><span class="s2">/yt_dlp/extractor/youtube/_video.py&quot;</span>
-</code></pre>
-</div>
-
-<hr />
-
 <h2 id="usage">Usage</h2>
 
 <div class="pdoc-code codehilite">
-<pre><span></span><code>ldl<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span><span class="o">[</span>VIDEO_URL_OR_ID<span class="o">]</span>
+<pre><span></span><code>ls-dlp<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span><span class="o">[</span>VIDEO_URL_OR_ID<span class="o">]</span>
 </code></pre>
 </div>
 
@@ -234,7 +200,7 @@ livestream_dl    </h1>
 <p><strong>Basic download:</strong></p>
 
 <div class="pdoc-code codehilite">
-<pre><span></span><code>ldl<span class="w"> </span><span class="se">\</span>
+<pre><span></span><code>ls-dlp<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--threads<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--dash<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--m3u8<span class="w"> </span><span class="se">\</span>
@@ -253,14 +219,14 @@ livestream_dl    </h1>
 <p><strong>Download with live chat and embed thumbnail:</strong></p>
 
 <div class="pdoc-code codehilite">
-<pre><span></span><code>ldl<span class="w"> </span>--live-chat<span class="w"> </span>--threads<span class="w"> </span><span class="m">4</span><span class="w"> </span>--embed-thumbnail<span class="w"> </span>VIDEO_ID
+<pre><span></span><code>ls-dlp<span class="w"> </span>--live-chat<span class="w"> </span>--threads<span class="w"> </span><span class="m">4</span><span class="w"> </span>--embed-thumbnail<span class="w"> </span>VIDEO_ID
 </code></pre>
 </div>
 
 <p><strong>Monitor a channel for streams:</strong></p>
 
 <div class="pdoc-code codehilite">
-<pre><span></span><code>ldl<span class="w"> </span>--monitor-channel<span class="w"> </span>--threads<span class="w"> </span><span class="m">4</span><span class="w"> </span>--dash<span class="w"> </span>--m3u8<span class="w"> </span>--wait-for-video<span class="w"> </span><span class="m">60</span><span class="w"> </span>CHANNEL_ID
+<pre><span></span><code>ls-dlp<span class="w"> </span>--monitor-channel<span class="w"> </span>--threads<span class="w"> </span><span class="m">4</span><span class="w"> </span>--dash<span class="w"> </span>--m3u8<span class="w"> </span>--wait-for-video<span class="w"> </span><span class="m">60</span><span class="w"> </span>CHANNEL_ID
 </code></pre>
 </div>
 
@@ -440,7 +406,7 @@ livestream_dl    </h1>
 <tr>
   <td><code>--live-chat</code></td>
   <td><code>False</code></td>
-  <td>Download live chat (requires <code>yt-dlp</code> or <code>chat-downloader</code>).</td>
+  <td>Download live chat (requires <code>yt-dlp</code>).</td>
 </tr>
 <tr>
   <td><code>--stop-chat-when-done</code></td>
@@ -632,7 +598,7 @@ livestream_dl    </h1>
 
 <h3 id="full-options">Full options</h3>
 
-<pre><code>$ ldl --help
+<pre><code>$ ls-dlp --help
 usage: runner.py [-h] [--resolution RESOLUTION] [--custom-sort CUSTOM_SORT] [--threads THREADS] [--batch-size BATCH_SIZE] [--segment-retries SEGMENT_RETRIES] [--no-merge] [--merge] [--cookies COOKIES] [--output OUTPUT] [--ext EXT] [--temp-folder TEMP_FOLDER] [--write-thumbnail] [--embed-thumbnail]      
                  [--write-info-json] [--write-description] [--keep-temp-files] [--keep-ts-files] [--live-chat] [--keep-database-file] [--recovery] [--force-recover-merge] [--recovery-failure-tolerance RECOVERY_FAILURE_TOLERANCE] [--wait-limit WAIT_LIMIT] [--database-in-memory] [--direct-to-ts]
                  [--wait-for-video WAIT_FOR_VIDEO] [--json-file JSON_FILE] [--remove-ip-from-json] [--clean-urls] [--clean-info-json] [--log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}] [--no-console] [--log-file LOG_FILE] [--write-ffmpeg-command] [--stats-as-json] [--ytdlp-options YTDLP_OPTIONS] [--dash]
@@ -746,7 +712,6 @@ In the SQLite method, the existence of a downloaded segment is checked before it
 <ul>
 <li><strong>Concurrent Futures:</strong> The downloader uses <code>concurrent.futures</code> for thread management. While robust, stopping the downloader gracefully (e.g., via Keyboard Interrupt) can sometimes be delayed if a thread is stuck on a request.</li>
 <li><strong>Stream Recovery:</strong> This feature is currently in a "semi-broken" state and may not work reliably for all stream types.</li>
-<li><strong>Chat Downloader:</strong> The <code>chat-downloader</code> dependency occasionally breaks due to YouTube updates; the tool may fall back to <code>yt-dlp</code> for chat extraction which has different output formatting.</li>
 </ul>
 </div>
 
@@ -1857,7 +1822,7 @@ In the SQLite method, the existence of a downloaded segment is checked before it
                                         <input id="LiveStreamDownloader.__init__-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
             
-        <span class="name">LiveStreamDownloader</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="n">kill_all</span><span class="p">:</span> <span class="n">threading</span><span class="o">.</span><span class="n">Event</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">threading</span><span class="o">.</span><span class="n">Event</span> <span class="n">at</span> <span class="mh">0x7fb4b202a210</span><span class="p">:</span> <span class="n">unset</span><span class="o">&gt;</span>,</span><span class="param">	<span class="n">cleanup</span><span class="p">:</span> <span class="n">threading</span><span class="o">.</span><span class="n">Event</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">threading</span><span class="o">.</span><span class="n">Event</span> <span class="n">at</span> <span class="mh">0x7fb4b202a990</span><span class="p">:</span> <span class="n">unset</span><span class="o">&gt;</span>,</span><span class="param">	<span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span> <span class="o">|</span> <span class="n">logging</span><span class="o">.</span><span class="n">LoggerAdapter</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">kill_this</span><span class="p">:</span> <span class="n">threading</span><span class="o">.</span><span class="n">Event</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></span>)</span>
+        <span class="name">LiveStreamDownloader</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="n">kill_all</span><span class="p">:</span> <span class="n">threading</span><span class="o">.</span><span class="n">Event</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">threading</span><span class="o">.</span><span class="n">Event</span> <span class="n">at</span> <span class="mh">0x7fd21a792210</span><span class="p">:</span> <span class="n">unset</span><span class="o">&gt;</span>,</span><span class="param">	<span class="n">cleanup</span><span class="p">:</span> <span class="n">threading</span><span class="o">.</span><span class="n">Event</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">threading</span><span class="o">.</span><span class="n">Event</span> <span class="n">at</span> <span class="mh">0x7fd21a792990</span><span class="p">:</span> <span class="n">unset</span><span class="o">&gt;</span>,</span><span class="param">	<span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span> <span class="o">|</span> <span class="n">logging</span><span class="o">.</span><span class="n">LoggerAdapter</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">kill_this</span><span class="p">:</span> <span class="n">threading</span><span class="o">.</span><span class="n">Event</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></span>)</span>
 
                 <label class="view-source-button" for="LiveStreamDownloader.__init__-view-source"><span>View Source</span></label>
 
@@ -3359,7 +3324,7 @@ In the SQLite method, the existence of a downloaded segment is checked before it
                 <section id="__version__">
                     <div class="attr variable">
             <span class="name">__version__</span>        =
-<span class="default_value">&#39;0.0.0.post1+eab9d6e&#39;</span>
+<span class="default_value">&#39;0.0.0&#39;</span>
 
         
     </div>
