@@ -181,7 +181,7 @@ def monitor_channel(options=None) -> None:
                     continue
                 video_options = copy.deepcopy(options)
                 t = threading.Thread(
-                    target=main,
+                    target=run,
                     args=(video_id,),
                     kwargs={
                         "resolution": video_options.get("resolution"),
