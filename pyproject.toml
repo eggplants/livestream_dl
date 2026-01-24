@@ -37,6 +37,7 @@ dependencies = [
   "httpx>=0.28.1",
   "urllib3>=2.6.3",
   "yt-dlp>=2025.12.8",
+  "yt-dlp-ejs>=0.3.2",
 ]
 
 urls.repository = "https://github.com/eggplants/ls_dlp"

@@ -3,7 +3,7 @@ revision = 3
 requires-python = ">=3.10, <4"
 
 [options]
-exclude-newer = "2026-01-17T01:47:57.906394017Z"
+exclude-newer = "2026-01-17T14:20:31.91854631Z"
 exclude-newer-span = "P7D"
 
 [[package]]
@@ -265,6 +265,7 @@ dependencies = [
     { name = "httpx" },
     { name = "urllib3" },
     { name = "yt-dlp" },
+    { name = "yt-dlp-ejs" },
 ]
 
 [package.dev-dependencies]
@@ -284,6 +285,7 @@ requires-dist = [
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "urllib3", specifier = ">=2.6.3" },
     { name = "yt-dlp", specifier = ">=2025.12.8" },
+    { name = "yt-dlp-ejs", specifier = ">=0.3.2" },
 ]
 
 [package.metadata.requires-dev]
@@ -826,4 +828,13 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/14/77/db924ebbd99d0b2b571c184cb08ed232cf4906c6f9b76eed763cd2c84170/yt_dlp-2025.12.8.tar.gz", hash = "sha256:b773c81bb6b71cb2c111cfb859f453c7a71cf2ef44eff234ff155877184c3e4f", size = 3088947, upload-time = "2025-12-08T00:16:01.649Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/6e/2f/98c3596ad923f8efd32c90dca62e241e8ad9efcebf20831173c357042ba0/yt_dlp-2025.12.8-py3-none-any.whl", hash = "sha256:36e2584342e409cfbfa0b5e61448a1c5189e345cf4564294456ee509e7d3e065", size = 3291464, upload-time = "2025-12-08T00:15:58.556Z" },
+]
+
+[[package]]
+name = "yt-dlp-ejs"
+version = "0.3.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/de/72/57d02cf78eb45126bd171298d6a58a5bd48ce1a398b6b7ff00fc904f1f0c/yt_dlp_ejs-0.3.2.tar.gz", hash = "sha256:31a41292799992bdc913e03c9fac2a8c90c82a5cbbc792b2e3373b01da841e3e", size = 34678, upload-time = "2025-12-07T23:44:48.258Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/9d/0d/1f0d7a735ca60b87953271b15d00eff5eef05f6118390ddf6f81982526ed/yt_dlp_ejs-0.3.2-py3-none-any.whl", hash = "sha256:f2dc6b3d1b909af1f13e021621b0af048056fca5fb07c4db6aa9bbb37a4f66a9", size = 53252, upload-time = "2025-12-07T23:44:46.605Z" },
 ]
