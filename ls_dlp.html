@@ -183,16 +183,12 @@ ls_dlp    </h1>
 
 <h2 id="requirements">Requirements</h2>
 
-<ul>
-<li><a href="https://www.python.org/">Python</a> 3.12+ (Developed on 3.13)</li>
-<li><a href="https://ffmpeg.org/">FFmpeg</a> (Required for merging video/audio)</li>
-<li><a href="https://deno.com/">deno</a> Required for yt-dlp</li>
-</ul>
+<p>See <a href="./Dockerfile"><code>Dockerfile</code></a></p>
 
 <h2 id="installation">Installation</h2>
 
 <div class="pdoc-code codehilite">
-<pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>git+https://github.com/eggplants/ls-dlp
+<pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>ls-dlp
 </code></pre>
 </div>
 
@@ -1830,7 +1826,7 @@ In the SQLite method, the existence of a downloaded segment is checked before it
                                         <input id="LiveStreamDownloader.__init__-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
             
-        <span class="name">LiveStreamDownloader</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="n">kill_all</span><span class="p">:</span> <span class="n">threading</span><span class="o">.</span><span class="n">Event</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">threading</span><span class="o">.</span><span class="n">Event</span> <span class="n">at</span> <span class="mh">0x7f872efe2210</span><span class="p">:</span> <span class="n">unset</span><span class="o">&gt;</span>,</span><span class="param">	<span class="n">cleanup</span><span class="p">:</span> <span class="n">threading</span><span class="o">.</span><span class="n">Event</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">threading</span><span class="o">.</span><span class="n">Event</span> <span class="n">at</span> <span class="mh">0x7f872efe2990</span><span class="p">:</span> <span class="n">unset</span><span class="o">&gt;</span>,</span><span class="param">	<span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span> <span class="o">|</span> <span class="n">logging</span><span class="o">.</span><span class="n">LoggerAdapter</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">kill_this</span><span class="p">:</span> <span class="n">threading</span><span class="o">.</span><span class="n">Event</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></span>)</span>
+        <span class="name">LiveStreamDownloader</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="n">kill_all</span><span class="p">:</span> <span class="n">threading</span><span class="o">.</span><span class="n">Event</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">threading</span><span class="o">.</span><span class="n">Event</span> <span class="n">at</span> <span class="mh">0x7f262d762210</span><span class="p">:</span> <span class="n">unset</span><span class="o">&gt;</span>,</span><span class="param">	<span class="n">cleanup</span><span class="p">:</span> <span class="n">threading</span><span class="o">.</span><span class="n">Event</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">threading</span><span class="o">.</span><span class="n">Event</span> <span class="n">at</span> <span class="mh">0x7f262d762990</span><span class="p">:</span> <span class="n">unset</span><span class="o">&gt;</span>,</span><span class="param">	<span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span> <span class="o">|</span> <span class="n">logging</span><span class="o">.</span><span class="n">LoggerAdapter</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">kill_this</span><span class="p">:</span> <span class="n">threading</span><span class="o">.</span><span class="n">Event</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></span>)</span>
 
                 <label class="view-source-button" for="LiveStreamDownloader.__init__-view-source"><span>View Source</span></label>
 
@@ -3332,7 +3328,7 @@ In the SQLite method, the existence of a downloaded segment is checked before it
                 <section id="__version__">
                     <div class="attr variable">
             <span class="name">__version__</span>        =
-<span class="default_value">&#39;0.0.0.post1+79d61fd&#39;</span>
+<span class="default_value">&#39;0.0.0.post1+e173e8c&#39;</span>
 
         
     </div>
