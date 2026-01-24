@@ -7,18 +7,29 @@ name = "ls-dlp"
 description = "Garbage youtube livestream downloader"
 readme = "README.md"
 keywords = [ "download" ]
-license = { text = "NoneLicense" }
+license = { file = "LICENSE" }
 maintainers = [ { name = "eggplants", email = "w10776e8w@yahoo.co.jp" } ]
 authors = [ { name = "Alex Mckenzie-Hicks", email = "github@canofsocks.com" } ]
 requires-python = ">=3.10,<4"
 classifiers = [
   "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "Intended Audience :: End Users/Desktop",
+  "License :: OSI Approved :: The Unlicense (Unlicense)",
+  "Natural Language :: English",
+  "Operating System :: OS Independent",
   "Programming Language :: Python :: 3 :: Only",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3.14",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Topic :: Internet",
+  "Topic :: Multimedia :: Video",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Topic :: Utilities",
   "Typing :: Typed",
 ]
 dynamic = [ "version" ]
