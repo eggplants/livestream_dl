@@ -77,6 +77,8 @@ class LiveStreamDownloader:
         self.refresh_json = {}
         self.live_status = ""
         self.lock: threading.Lock = threading.Lock()
+        self.last_refresh_attempt = time.monotonic()
+        self.minimum_refresh_time = 30.0
 
         self.graceful_stop = threading.Event()
 
@@ -1270,22 +1272,37 @@ class LiveStreamDownloader:
 
     def refresh_info_json(self, update_threshold: int, id, cookies=None, additional_options=None, include_dash=False, include_m3u8=False):
         # Check if time difference is greater than the threshold. If doesn't exist, subtraction of zero will always be true
-        if time.time() - self.refresh_json.get("refresh_time", 0.0) > update_threshold:
-            self.refresh_json, self.live_status = getUrls.get_Video_Info(id=id, wait=False, cookies=cookies, additional_options=additional_options, include_dash=include_dash, include_m3u8=include_m3u8, clean_info_dict=True)
+        with self.lock:
+            if time.time() - self.refresh_json.get("refresh_time", 0.0) > update_threshold:
+                try:
+                    if time.monotonic() - self.last_refresh_attempt < self.minimum_refresh_time:
+                        sleep_time = time.monotonic() - self.last_refresh_attempt
+                        self.logger.log(setup_logger.VERBOSE_LEVEL_NUM, f"Waiting for {sleep_time}s before attempting to refresh URL")
+                        time.sleep(sleep_time)
 
-            # Remove unnecessary items for info.json used purely for url refresh
-            self.remove_format_segment_playlist_from_info_dict(self.refresh_json)
+                    # Set last attempt time before and after to ensure that a time is captured on an error
+                    self.last_refresh_attempt = time.monotonic()
+                    self.refresh_json, self.live_status = getUrls.get_Video_Info(id=id, wait=False, cookies=cookies, additional_options=additional_options, include_dash=include_dash, include_m3u8=include_m3u8, clean_info_dict=True)
+                    self.last_refresh_attempt = time.monotonic()
+                    
+                    # Remove unnecessary items for info.json used purely for url refresh
+                    self.remove_format_segment_playlist_from_info_dict(self.refresh_json)
 
-            self.refresh_json.pop("thumbnails", None)
-            self.refresh_json.pop("tags", None)
-            self.refresh_json.pop("description", None)
+                    self.refresh_json.pop("thumbnails", None)
+                    self.refresh_json.pop("tags", None)
+                    self.refresh_json.pop("description", None)                    
 
-            # Add refresh time for reference
-            self.refresh_json["refresh_time"] = time.time()                   
+                    # Add refresh time for reference
+                    self.refresh_json["refresh_time"] = time.time()                   
+                    self.minimum_refresh_time = max(30.0, self.minimum_refresh_time/2)
 
-            return self.refresh_json, self.live_status
-        else:
-            return self.refresh_json, self.live_status
+                    return self.refresh_json, self.live_status
+                except getUrls.RateLimitException as e:
+                    self.logger.error("Received rate limit error, doubling refresh attempt timeout")
+                    self.minimum_refresh_time = self.minimum_refresh_time * 2
+                    raise
+            else:
+                return self.refresh_json, self.live_status
         
 class FileInfo(Path):
     _file_type: str = None
@@ -1538,7 +1555,7 @@ class DownloadStream:
             while True:     
                 self.check_kill(executor)
 
-                if self.livestream_coordinator and getattr(self.livestream_coordinator, 'graceful_stop', None) and self.livestream_coordinator.graceful_stop.is_set():
+                if self.livestream_coordinator and self.livestream_coordinator.graceful_stop.is_set():
                     self.logger.info(f"Graceful stop triggered for {self.format}. Finalizing downloaded segments...")
                     break
 
@@ -2428,30 +2445,23 @@ class DownloadStream:
             }
 
         # Only start refresh if manifest thread isn't activated
-        elif self.following_manifest_thread is None:
+        elif self.following_manifest_thread is None and not (self.livestream_coordinator and self.livestream_coordinator.graceful_stop.is_set()):
             # 4. Otherwise, we are IDLE. Start the background thread!
             self.logger.info("Starting background URL refresh for {0}".format(self.format))
             state['status'] = 'IN_PROGRESS'
             
             def fetch_url_data():
                 try:
-                    if self.livestream_coordinator:
-                        timeout = -1 if wait is True else 5.0
-                            
-                        if self.livestream_coordinator.lock.acquire(timeout=timeout):
-                            try:
-                                info_dict, live_status = self.livestream_coordinator.refresh_info_json(
-                                    update_threshold=min(900.0, time.time() - self.url_checked), 
-                                    id=self.id, cookies=self.cookies, 
-                                    additional_options=self.yt_dlp_options, 
-                                    include_dash=self.include_dash, 
-                                    include_m3u8=(self.include_m3u8 or self.force_m3u8)
-                                )
-                                state['result'] = (info_dict, live_status)
-                            finally:
-                                self.livestream_coordinator.lock.release()
-                        else:
-                            state['result'] = None
+                    if self.livestream_coordinator:                            
+                        info_dict, live_status = self.livestream_coordinator.refresh_info_json(
+                            update_threshold=min(900.0, time.time() - self.url_checked), 
+                            id=self.id, cookies=self.cookies, 
+                            additional_options=self.yt_dlp_options, 
+                            include_dash=self.include_dash, 
+                            include_m3u8=(self.include_m3u8 or self.force_m3u8)
+                        )
+                        state['result'] = (info_dict, live_status)
+
                     else:
                         info_dict, live_status = getUrls.get_Video_Info(
                             self.id, wait=False, cookies=self.cookies, 
@@ -2522,6 +2532,9 @@ class DownloadStream:
                 if "membership" in str(e) and not self.is_403:
                     self.logger.warning("{0} is now members only. Continuing until 403 errors")
                     self.is_members_error = True
+                elif "recording is not available" in str(e) and not self.is_403:
+                    self.logger.warning("Recording is not available, marking as post-live")
+                    self.live_status = "post_live"
                 else:
                     self.is_private = True
             except getUrls.VideoUnavailableError as e:

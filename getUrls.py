@@ -1,12 +1,13 @@
 #!/usr/local/bin/python
 import yt_dlp
 import logging
-import json
 import random
 import time
 import argparse
 import threading
 from typing import Optional, Union, Dict, Any, Tuple
+from httpx import HTTPStatusError
+from collections import deque
 
 try:
     from setup_logger import VERBOSE_LEVEL_NUM
@@ -17,13 +18,11 @@ except ModuleNotFoundError:
 extraction_event = threading.Event()
 
 class MyLogger:
-    def __init__(self, logger: logging.Logger, max_retries: int = 1, base_wait: int = 600):
+    repeat_threshold = 10
+    def __init__(self, logger: logging.Logger, wait = True):
         self.logger = logger
-        self.retry_count = 0
-        self.max_retries = max_retries
-        self.base_wait = base_wait
-        self.should_retry = False
-        self.retry_message = None
+        self.wait = wait
+        self.warning_history = deque(maxlen=self.repeat_threshold)
 
     def debug(self, msg):
         if not msg.startswith("[wait] Remaining time until next attempt:"):
@@ -45,13 +44,21 @@ class MyLogger:
             self.logger.log(VERBOSE_LEVEL_NUM, msg)
 
     def warning(self, msg):
-        msg_str = str(msg).lower()       
+        msg_str = str(msg).lower()   
+        if not self.wait:
+            self.warning_history.append(msg_str)    
 
         # --- RETRYABLE TECHNICAL ERRORS ---
         # These occur when a stream is starting but CDN isn't ready
         if ("private" in msg_str or "unavailable" in msg_str):
             self.logger.info(msg_str)
             raise yt_dlp.utils.DownloadError("Private video. Sign in if you've been granted access to this video")
+        elif "http error 429" in msg_str:
+            self.logger.error(msg)
+            raise yt_dlp.utils.DownloadError("HTTP Error 429: Too Many Requests")
+        elif "live stream recording is not available" in msg_str:
+            self.logger.warning(msg)
+            raise yt_dlp.utils.DownloadError(msg_str)
         elif "video is no longer live" in msg_str:
             self.logger.info(msg_str)
             raise yt_dlp.utils.DownloadError("Video is no longer live")
@@ -66,6 +73,10 @@ class MyLogger:
             self.logger.warning(f"Live stream not fully available yet, will retry: {msg_str}")
         else:
             self.logger.warning(msg)
+
+        if not self.wait and len(self.history) >= self.repeat_threshold and len(set(self.history)) == 1:
+            self.logger.error("Repeated message detected: {0}".format(msg))
+            raise RepeatedWarningError(msg, self.repeat_threshold)
 
     def error(self, msg):
         self.logger.error(msg)
@@ -86,6 +97,16 @@ class VideoProcessedError(ValueError): pass
 class VideoUnavailableError(ValueError): pass
 class LivestreamError(TypeError): pass
 class MaxRetryExceededError(Exception): pass
+class RateLimitException(HTTPStatusError): pass
+class RateLimitException(HTTPStatusError): pass
+
+class RepeatedWarningError(Exception):
+    """Exception raised when a log message is repeated beyond the allowed threshold."""
+    def __init__(self, message, threshold):
+        self.message = message
+        self.threshold = threshold
+        # Pass a descriptive string to the base Exception class
+        super().__init__(f"Message repeated more than {threshold} times in succession: '{message}'")
 
 def parse_wait(string) -> Tuple[int, Optional[int]]:
     try:
@@ -141,7 +162,7 @@ def get_Video_Info(
     url = str(id) # Assuming ID might be passed, usually complete URL or ID is handled by yt-dlp
     
     # Initialize custom logger with the passed retry limit
-    yt_dlpLogger = MyLogger(logger=logger, max_retries=max_retries)
+    yt_dlpLogger = MyLogger(logger=logger, wait=True)
     
     # Base Options
     ydl_opts = {
@@ -165,6 +186,8 @@ def get_Video_Info(
         ydl_opts['wait_for_video'] = (5, 300)
     elif isinstance(wait, str):
         ydl_opts['wait_for_video'] = parse_wait(wait)
+
+    yt_dlpLogger.wait = True if ydl_opts.get("wait_for_video", None) else False
         
     # Handle Options Merging
     if additional_options is None:
@@ -226,12 +249,16 @@ def get_Video_Info(
             # Specific Error Handling
             if 'video is private' in err_str or "sign in" in err_str:
                 raise VideoInaccessibleError(f"Video {id} is private")
+            elif "http error 429" in err_str:
+                raise RateLimitException("HTTP Error 429: Too Many Requests")
             elif 'will begin in' in err_str or 'premieres in' in err_str:
                 raise VideoUnavailableError("Video is not yet available")
             elif "members" in err_str:
                 raise VideoInaccessibleError(f"Video {id} is a membership video")
             elif "not available on this app" in err_str:
                 raise VideoInaccessibleError(f"Video {id} not available on this player")
+            elif "live stream recording is not available" in err_str:
+                raise VideoInaccessibleError(f"This live stream recording is not available.")
             elif "no longer live" in err_str:
                 raise LivestreamError("Livestream has ended")   
             elif "terminated" in err_str:
@@ -244,5 +271,9 @@ def get_Video_Info(
                 raise VideoUnavailableError("Video has been removed/deleted")
             else:
                 raise e
+        except RepeatedWarningError as e:
+            raise
+        except Exception as e:
+            raise
         finally:
             extraction_event.clear()
