@@ -45,7 +45,7 @@ class MyLogger:
 
     def warning(self, msg):
         msg_str = str(msg).lower()   
-        if not self.wait:
+        if not self.wait and not ("[pot:bgutil:http]" in msg_str):
             self.warning_history.append(msg_str)    
 
         # --- RETRYABLE TECHNICAL ERRORS ---

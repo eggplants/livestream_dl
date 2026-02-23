@@ -141,7 +141,6 @@ def monitor_channel(options={}):
     if not options.get("wait_for_video", None):
         options["wait_for_video"] = (60, None)
     wait = max((num for num in options.get("wait_for_video", []) if isinstance(num, (int, float))), default=60)
-
     while not channel_id.startswith("UC"):
         new_channel_id = monitor_channel.resolve_channel(channel_id) or ""
         # Break if resolved and start search
