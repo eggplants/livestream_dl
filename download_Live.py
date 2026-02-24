@@ -1270,7 +1270,7 @@ class LiveStreamDownloader:
             except:
                 pass
 
-    def refresh_info_json(self, update_threshold: int, id, cookies=None, additional_options=None, include_dash=False, include_m3u8=False):
+    def refresh_info_json(self, update_threshold: int, id, cookies=None, additional_options=None, include_dash=False, include_m3u8=False, ignore_no_formats=False,):
         # Check if time difference is greater than the threshold. If doesn't exist, subtraction of zero will always be true
         with self.lock:
             if time.time() - self.refresh_json.get("refresh_time", 0.0) > update_threshold:
@@ -1282,9 +1282,9 @@ class LiveStreamDownloader:
 
                     # Set last attempt time before and after to ensure that a time is captured on an error
                     self.last_refresh_attempt = time.monotonic()
-                    self.refresh_json, self.live_status = getUrls.get_Video_Info(id=id, wait=False, cookies=cookies, additional_options=additional_options, include_dash=include_dash, include_m3u8=include_m3u8, clean_info_dict=True)
+                    self.refresh_json, self.live_status = getUrls.get_Video_Info(id=id, wait=False, cookies=cookies, additional_options=additional_options, include_dash=include_dash, include_m3u8=include_m3u8, clean_info_dict=True, ignore_no_formats=ignore_no_formats,)
                     self.last_refresh_attempt = time.monotonic()
-                    
+
                     # Remove unnecessary items for info.json used purely for url refresh
                     self.remove_format_segment_playlist_from_info_dict(self.refresh_json)
 
@@ -1689,7 +1689,7 @@ class DownloadStream:
                         # If over 10 wait loops have been executed, get page for new URL and update status if necessary
                         elif wait % 10 == 0 and wait > 0:
                             temp_stream_url = self.stream_url
-                            refresh = self.refresh_url()
+                            refresh = self.refresh_url(ignore_no_formats=True)
                             if self.is_private:
                                 self.logger.debug("Video is private and no more segments are available. Ending...")
                                 break
@@ -1790,7 +1790,7 @@ class DownloadStream:
                         
                         self.logger.warning("All remaining segments have exceeded the retry threshold, attempting URL refresh...")
                         temp_stream_url = self.stream_url
-                        refresh = self.refresh_url()
+                        refresh = self.refresh_url(ignore_no_formats=True)
                         if refresh is True:
                             self.logger.info("Video finished downloading via new manifest")
                             break
@@ -2407,7 +2407,7 @@ class DownloadStream:
             self.delete_ts_file()
             os.remove(self.folder)
 
-    def refresh_url(self, follow_manifest=True, wait=True): # Added wait parameter
+    def refresh_url(self, follow_manifest=True, wait=True, ignore_no_formats=False): # Added wait parameter
         exc = res = None
         # 1. Initialize the state dictionary if it doesn't exist
         if not hasattr(self, '_refresh_state'):
@@ -2458,7 +2458,8 @@ class DownloadStream:
                             id=self.id, cookies=self.cookies, 
                             additional_options=self.yt_dlp_options, 
                             include_dash=self.include_dash, 
-                            include_m3u8=(self.include_m3u8 or self.force_m3u8)
+                            include_m3u8=(self.include_m3u8 or self.force_m3u8),
+                            ignore_no_formats=ignore_no_formats,
                         )
                         state['result'] = (info_dict, live_status)
 
@@ -2467,7 +2468,8 @@ class DownloadStream:
                             self.id, wait=False, cookies=self.cookies, 
                             additional_options=self.yt_dlp_options, 
                             include_dash=self.include_dash, 
-                            include_m3u8=(self.include_m3u8 or self.force_m3u8)
+                            include_m3u8=(self.include_m3u8 or self.force_m3u8),
+                            ignore_no_formats=ignore_no_formats,
                         )
                         state['result'] = (info_dict, live_status)
                 except Exception as e:
@@ -2503,6 +2505,9 @@ class DownloadStream:
                 if self.detect_manifest_change(info_json=info_dict, follow_manifest=follow_manifest) is True:
                     return True
                 
+                if live_status is not None:
+                    self.live_status = live_status
+                
                 resolution = "(bv/ba/best)[format_id~='^{0}(?:-.*)?$'][protocol={1}]".format(self.stream_url.itag, self.stream_url.protocol)
                 stream_url = YoutubeURL.Formats().getFormatURL(info_json=info_dict, resolution=resolution, sort=self.yt_dlp_sort, include_dash=self.include_dash, include_m3u8=self.include_m3u8, force_m3u8=self.force_m3u8, stream_type=self.type) 
                 
@@ -2517,15 +2522,10 @@ class DownloadStream:
                     self.logger.log(setup_logger.VERBOSE_LEVEL_NUM, "Refreshed stream URL with {0} - {1}".format(stream_url.format_id, stream_url.fomat_note))
                     self.is_members_error = False
                 else:
-                    self.logger.warning("Unable to refresh URLs for {0} on format {2} ({1})".format(self.id, self.format, resolution))
-                    
-                if live_status is not None:
-                    self.live_status = live_status
-                
+                    self.logger.warning("Unable to refresh URLs for {0} on format {2} ({1})".format(self.id, self.format, resolution))        
+                                
                 if info_dict:
                     self.info_dict = info_dict    
-
-                
 
             except getUrls.VideoInaccessibleError as e:
                 self.logger.warning("Video Inaccessible error: {0}".format(e))
@@ -2786,7 +2786,7 @@ class DownloadStreamDirect(DownloadStream):
                         # If over 10 wait loops have been executed, get page for new URL and update status if necessary
                         elif wait % 10 == 0 and wait > 0:
                             temp_stream_url = self.stream_url
-                            refresh = self.refresh_url()
+                            refresh = self.refresh_url(ignore_no_formats=True)
                             if self.is_private:
                                 self.logger.debug("Video is private and no more segments are available. Ending...")
                                 break
@@ -2819,7 +2819,7 @@ class DownloadStreamDirect(DownloadStream):
                     elif segment_retries and all(v > self.fragment_retries for v in segment_retries.values()):
                         self.logger.warning("All remaining segments have exceeded the retry threshold, attempting URL refresh...")
                         temp_stream_url = self.stream_url
-                        refresh = self.refresh_url(follow_manifest=False)                        
+                        refresh = self.refresh_url(ignore_no_formats=True)                       
                         if refresh is True:
                             self.logger.warning("Video has new manifest. This cannot be handled by current implementation of Direct to .ts implementation")
                             break

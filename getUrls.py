@@ -151,7 +151,7 @@ def get_Video_Info(
     include_m3u8: bool = False, 
     logger: Optional[logging.Logger] = None, 
     clean_info_dict: bool = False,
-    max_retries: int = 1,  # Added argument
+    ignore_no_formats=False,
     **kwargs               # Added kwargs
 ):
     
@@ -172,7 +172,8 @@ def get_Video_Info(
         'writesubtitles': True,
         'subtitlesformat': 'json',
         'subtitleslangs': ['live_chat'],
-        'logger': yt_dlpLogger
+        #'logger': yt_dlpLogger,
+        'ignore_no_formats_error': ignore_no_formats,
     }
 
     # Handle Wait Logic
@@ -237,7 +238,7 @@ def get_Video_Info(
             
             # Check live status
             live_status = info_dict.get('live_status')
-            if live_status not in ['is_live', 'post_live']:
+            if live_status not in ['is_upcoming', 'is_live', 'post_live']:
                 raise VideoProcessedError("Video has been processed, please use yt-dlp directly")
             
             return info_dict, live_status
