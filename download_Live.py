@@ -1389,7 +1389,7 @@ class DownloadStream:
         
         self.batch_size = self.options.get('batch_size', 10)
         self.max_workers = self.options.get('max_workers', 5)
-        self.yt_dlp_options = self.options.get('yt_dlp_options')
+        self.yt_dlp_options = self.options.get('ytdlp_options')
 
         self.include_dash = self.options.get('include_dash', False)
         self.include_m3u8 = self.options.get('include_m3u8', False)
