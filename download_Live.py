@@ -875,9 +875,10 @@ class LiveStreamDownloader:
         self.logger.log(setup_logger.VERBOSE_LEVEL_NUM, "Files: {0}\n".format(json.dumps(self.file_names, default=lambda o: o.to_dict())))
         import subprocess
         import mimetypes
-        from yt_dlp.postprocessor.ffmpeg import FFmpegMetadataPP, FFmpegPostProcessorError, PostProcessor
-        import shlex
-        from sys import platform as sys_platform
+        from yt_dlp.postprocessor.ffmpeg import FFmpegMetadataPP, FFmpegPostProcessorError, PostProcessor, encodeArgument, shell_quote, variadic, Popen
+        import itertools
+        #import shlex
+        #from sys import platform as sys_platform
         class LiveStreamDLMerger(FFmpegMetadataPP):
             def __init__(self, downloader, ffmpeg_command_file: FileInfo=None):
                 self.ffmpeg_command_file = ffmpeg_command_file
@@ -885,34 +886,51 @@ class LiveStreamDownloader:
             
             @PostProcessor._restrict_to()
             def run(self, info):
-                super().run(info)
+                super().run(info)           
 
-            def string_to_safe_shell_file(self, command_string, file_path):
-                # 1. Split the string into a list, respecting quotes
-                # Note: posix=False helps keep Windows-style backslashes intact
-                args = shlex.split(command_string, posix=(sys_platform != 'win32'))
+            def real_run_ffmpeg(self, input_path_opts, output_path_opts, *, expected_retcodes=(0,)):
+                self.check_version()
 
-                # 2. Re-build it using the OS-specific logic
-                if sys_platform == 'win32':
-                    safe_cmd = subprocess.list2cmdline(args)
-                else:
-                    safe_cmd = shlex.join(args)
+                oldest_mtime = min(
+                    os.stat(path).st_mtime for path, _ in input_path_opts if path)
 
-                # 3. Write to file
-                with open(file_path, 'w', encoding="utf-8") as f:
-                    f.write(safe_cmd + "\n")
+                cmd = [self.executable, encodeArgument('-y')]
+                # avconv does not have repeat option
+                if self.basename == 'ffmpeg':
+                    cmd += [encodeArgument('-loglevel'), encodeArgument('repeat+info')]
 
-            def write_debug(self, msg):
-                # Intercept the specific debug message containing the command
-                if msg.startswith('ffmpeg command line: ') and self.ffmpeg_command_file:
-                    # Extract the command or just save the whole line
-                    command_string = msg.replace('ffmpeg command line: ', '')
-                    #self.string_to_safe_shell_file(command_string=command_string, file_path=str(ffmpeg_command_file.absolute()))
-                    with open(str(ffmpeg_command_file.absolute()), 'w', encoding="utf-8") as f:
-                        f.write(command_string + "\n")
+                def make_args(file, args, name, number):
+                    keys = [f'_{name}{number}', f'_{name}']
+                    if name == 'o':
+                        args += ['-movflags', '+faststart']
+                        if number == 1:
+                            keys.append('')
+                    args += self._configuration_args(self.basename, keys)
+                    if name == 'i':
+                        args.append('-i')
+                    return (
+                        [encodeArgument(arg) for arg in args]
+                        + [self._ffmpeg_filename_argument(file)])
+
+                for arg_type, path_opts in (('i', input_path_opts), ('o', output_path_opts)):
+                    cmd += itertools.chain.from_iterable(
+                        make_args(path, list(opts), arg_type, i + 1)
+                        for i, (path, opts) in enumerate(path_opts) if path)
+                    
+                command_string = shell_quote(cmd)
+                self.write_debug(f'ffmpeg command line: {command_string}')
+                with open(str(ffmpeg_command_file.absolute()), 'w', encoding="utf-8") as f:
+                    f.write(command_string + "\n")
+                _, stderr, returncode = Popen.run(
+                    cmd, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
                 
-                # Always call the original write_debug so you don't break logging
-                super().write_debug(msg)
+                if returncode not in variadic(expected_retcodes):
+                    #self.write_debug(stderr)                    
+                    raise FFmpegPostProcessorError(stderr)
+                for out_path, _ in output_path_opts:
+                    if out_path:
+                        self.try_utime(out_path, oldest_mtime, oldest_mtime)
+                return stderr
 
         class YTDLP_FFmpeg_logger(YoutubeURL.YTDLPLogger):        
             def __init__(self, logger: logging = logging.getLogger()):
@@ -1098,6 +1116,7 @@ class LiveStreamDownloader:
                     
                 merged_file = FileInfo(base_output, file_type='merged')
                 try:                    
+                    self.logger.log(setup_logger.VERBOSE_LEVEL_NUM, f"Merging streams into {merged_file}")
                     livestream_merger.real_run_ffmpeg(
                         [(path, input_args) for path in files],
                         [(str(merged_file.absolute()), args)])
