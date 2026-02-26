@@ -72,6 +72,7 @@ jobs:
           pip install -r requirements.txt
           pip install -U --pre "yt-dlp[default]"
           pip install pyinstaller
+          python -c "import urllib.request; urllib.request.urlretrieve('https://raw.githubusercontent.com/yt-dlp/yt-dlp/master/devscripts/cli_to_api.py', 'cli_to_api.py')"
 
       # --- Build Step ---
       - name: Build Executable
