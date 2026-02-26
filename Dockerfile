@@ -32,7 +32,9 @@ RUN echo '#!/bin/sh' > /usr/local/bin/deno && \
 # 6. Install Python dependencies and apply patches
 COPY . .
 RUN pip install --no-cache-dir -r requirements.txt && \
-    pip install -U --no-cache-dir --pre yt-dlp[default]
+    pip install -U --no-cache-dir --pre yt-dlp[default] && \
+    python -c "import urllib.request; urllib.request.urlretrieve('https://raw.githubusercontent.com/yt-dlp/yt-dlp/master/devscripts/cli_to_api.py', 'cli_to_api.py')"
+
 
 #RUN sed -i "s/socs.value.startswith('CAA')/str(socs).startswith('CAA')/g" /usr/local/lib/python*/site-packages/chat_downloader/sites/youtube.py
 
