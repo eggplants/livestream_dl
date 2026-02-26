@@ -278,3 +278,19 @@ def get_Video_Info(
             raise
         finally:
             extraction_event.clear()
+
+
+def cli_to_ytdlp_options(opts, logger: Optional[logging.Logger] = None) -> dict:
+    if logger is None:
+        logger = logging.getLogger()
+    try:
+        try:
+            import cli_to_api
+            #from headers import user_agents
+        except ModuleNotFoundError as e:
+            from . import cli_to_api
+    except Exception as e:
+        logger.exception("cli_to_api script not found. Download from: https://github.com/yt-dlp/yt-dlp/blob/master/devscripts/cli_to_api.py")
+
+    return cli_to_api.cli_to_api(opts=opts, cli_defaults=False)
+

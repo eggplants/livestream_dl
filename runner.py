@@ -105,7 +105,7 @@ def httpx_proxy(proxy_string: str):
     else:
         return proxy_string
 
-def main(id, resolution='bv+ba/best', options={}, info_dict=None, thread_kill: threading.Event=kill_all):
+def main(id, resolution='bv+ba/best', options: dict={}, info_dict=None, thread_kill: threading.Event=kill_all):
     logger = download_Live.setup_logging(log_level=options.get('log_level', "INFO"), console=options.get('no_console', True), file=options.get('log_file', None), logger_name="Live-DL Downloader", video_id=id, redact_ips=options.get("redact_ips", False))
 
     # Initialise yt-dlp logger
@@ -118,6 +118,10 @@ def main(id, resolution='bv+ba/best', options={}, info_dict=None, thread_kill: t
     else:
         options['ytdlp_options'] = {}
     
+    if options.get("ytdlp_command_line_options"):
+        import shlex
+        options.setdefault('ytdlp_options', {}).update(getUrls.cli_to_ytdlp_options(shlex.split(options.get("ytdlp_command_line_options", ""))))
+
     if options.get('json_file', None) is not None:
         with open(options.get('json_file'), 'r', encoding='utf-8') as file:
             info_dict = json.load(file)
@@ -314,6 +318,8 @@ if __name__ == "__main__":
     parser.add_argument("--stop-chat-when-done", type=int, default=300, help="Wait a maximum of X seconds after a stream is finished to download live chat. This is useful if waiting for chat to end causes hanging. Onl works with chat-downloader live chat downloads.")
     
     parser.add_argument('--new-line', action='store_true', help="Console messages always print to new line. (Currently only ensured for stats output)")
+
+    parser.add_argument('--ytdlp-command-line-options', type=str, default=None, help='Pass yt-dlp command line options. This must be passed as a single string, recommended --ytdlp-command-line-options="options..." e.g. --ytdlp-command-line-options="--cookies-from-browser firefox" . Only currently works for yt-dlp extractor. Requires https://github.com/yt-dlp/yt-dlp/blob/master/devscripts/cli_to_api.py to be available. (EXPERIMENTAL)')
 
     monitor_group = parser.add_argument_group('Channel Monitor Options')
 
