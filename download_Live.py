@@ -2088,13 +2088,13 @@ class DownloadStream:
                         new_options.update({
                             "file_name": f"{self.file_base_name}.{temp_stream_url.manifest}",
                         })
-                        new_params.update({
+                        new_params = {
                             "info_dict": info_json,
                             "stream_url": temp_stream_url,
                             #"file_name": f"{self.file_base_name}.{temp_stream_url.manifest}",
                             "manifest": self.stream_url.itag if self.stream_url.manifest == temp_stream_url.manifest else self.stream_url.manifest,
                             "options": new_options,
-                        })
+                        }
                         if new_params.get("download_function", None) is not None: 
                             self.following_manifest_thread = threading.Thread(
                                 target=new_params.get("download_function"),
@@ -2132,12 +2132,12 @@ class DownloadStream:
                                 "file_name": f"{self.file_base_name}.{temp_stream_url.manifest}",
                                 "resolution": "bv+ba/best",
                             })
-                            new_params.update({
+                            new_params = {
                                 "info_dict": info_json,
                                 "stream_url": temp_stream_url,                            
                                 "options": new_options,
                                 "manifest": self.stream_url.itag if self.stream_url.manifest == temp_stream_url.manifest else self.stream_url.manifest,
-                            })
+                            }
                             if new_params.get("download_function", None) is not None: 
                                 self.following_manifest_thread = threading.Thread(
                                     target=new_params.get("download_function"),
