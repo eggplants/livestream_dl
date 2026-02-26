@@ -464,14 +464,14 @@ class LiveStreamDownloader:
     
 
     def move_to_final(self, options, output_file, file_names):
-        def maybe_move(key, dest_func, file_names_dict=file_names, option_flag=None):
+        def maybe_move(key, dest_func, file_names_dict: dict=file_names, option_flag=None):
             """
             key: key in file_names
             dest_func: func -> pathlib -> string dest path
             delete_if_false: if True, delete when option_flag not set
             option_flag: name of boolean option (write_thumbnail etc)
             """
-            f = file_names_dict.get(key)
+            f: FileInfo = file_names_dict.get(key)
             if not f:
                 return
             try:
@@ -526,6 +526,11 @@ class LiveStreamDownloader:
             maybe_move('merged',
                     lambda f: f"{stream_output_file}{f.suffix}",
                     file_names_dict=stream)
+            
+            maybe_move('ffmpeg_cmd',
+                    lambda f: f"{stream_output_file}.ffmpeg.txt",
+                    option_flag='write_ffmpeg_command',
+                    file_names_dict=stream,)
 
         maybe_move('live_chat',
                 lambda f: f"{output_file}.live_chat.zip",
@@ -541,10 +546,7 @@ class LiveStreamDownloader:
         except Exception as e:
             self.logger.exception(f"unable to move database files: {e}")
 
-        # special: ffmpeg_cmd
-        maybe_move('ffmpeg_cmd',
-                lambda f: f"{output_file}.ffmpeg.txt",
-                option_flag='write_ffmpeg_command')
+        
 
         # remove temp folder
         """
@@ -919,7 +921,7 @@ class LiveStreamDownloader:
                     
                 command_string = shell_quote(cmd)
                 self.write_debug(f'ffmpeg command line: {command_string}')
-                with open(str(ffmpeg_command_file.absolute()), 'w', encoding="utf-8") as f:
+                with open(self.ffmpeg_command_file, 'w', encoding="utf-8") as f:
                     f.write(command_string + "\n")
                 _, stderr, returncode = Popen.run(
                     cmd, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
@@ -991,7 +993,7 @@ class LiveStreamDownloader:
             }
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 
-                ffmpeg_command_file = FileInfo("{0}.ffmpeg.txt".format(filename), file_type='ffmpeg_command')
+                ffmpeg_command_file = FileInfo("{0}.ffmpeg.txt".format(base_output), file_type='ffmpeg_command')
                 file_names["streams"][manifest]['ffmpeg_cmd'] = ffmpeg_command_file
                 livestream_merger = LiveStreamDLMerger(downloader=ydl, ffmpeg_command_file=ffmpeg_command_file)
                 
