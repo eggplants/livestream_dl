@@ -2805,7 +2805,7 @@ class DownloadStreamDirect(DownloadStream):
                         self.logger.debug("No new fragments available for {0}, attempted {1} times...".format(self.format, wait))
                             
                         # If waited for new fragments hits 20 loops, assume stream is offline
-                        if wait > self.wait_limit and wait > self.wait_limit:
+                        if (self.wait_limit or 0) > 0 and wait > self.wait_limit:
                             self.logger.debug("Wait time for new fragment exceeded, ending download...")
                             break    
                         # If over 10 wait loops have been executed, get page for new URL and update status if necessary

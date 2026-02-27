@@ -216,6 +216,9 @@ def get_Video_Info(
     if not include_m3u8:
         skip_list.append("hls")
 
+    if wait is False:
+        ydl_opts.pop('wait_for_video', None)
+
     info_dict = {}    
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
