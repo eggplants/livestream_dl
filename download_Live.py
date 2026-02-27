@@ -351,7 +351,7 @@ class LiveStreamDownloader:
                     elif format_info.get('protocol', "") == "m3u8_native":      
                         format_obj = YoutubeURL.YoutubeURL(url=format_handler.getM3u8Url(format_info.get('url')), protocol=format_info.get('protocol'), format_id=format_info.get('format_id'), logger=self.logger, vcodec=format_info.get('vcodec', None), acodec=format_info.get('acodec', None), format_note=format_info.get("format_note"), language=format_info.get('language', None), ext=format_info.get('ext', None))
                         if not format_info.get('format_id', None):
-                            format['format_id'] = str(format_obj.itag).strip() 
+                            format_info['format_id'] = str(format_obj.itag).strip() 
                     else:
                         format_obj = YoutubeURL.YoutubeURL(format_info.get('url'), format_info.get('protocol'), format_id=format_info.get('format_id'), logger=self.logger, vcodec=format_info.get('vcodec', None), acodec=format_info.get('acodec', None), format_note=format_info.get("format_note"), language=format_info.get('language', None), ext=format_info.get('ext', None))
 
@@ -1291,7 +1291,9 @@ class LiveStreamDownloader:
             except:
                 pass
 
-    def refresh_info_json(self, update_threshold: int, id, cookies=None, additional_options=None, include_dash=False, include_m3u8=False, ignore_no_formats=False,):
+    def refresh_info_json(self, update_threshold: int, id, cookies=None, additional_options=None, include_dash=False, include_m3u8=False, ignore_no_formats=False, logger: logging.Logger=None):
+        if logger is None:
+            logger = self.logger
         # Check if time difference is greater than the threshold. If doesn't exist, subtraction of zero will always be true
         with self.lock:
             if time.time() - self.refresh_json.get("refresh_time", 0.0) > update_threshold:
@@ -1303,7 +1305,7 @@ class LiveStreamDownloader:
 
                     # Set last attempt time before and after to ensure that a time is captured on an error
                     self.last_refresh_attempt = time.monotonic()
-                    self.refresh_json, self.live_status = getUrls.get_Video_Info(id=id, wait=False, cookies=cookies, additional_options=additional_options, include_dash=include_dash, include_m3u8=include_m3u8, clean_info_dict=True, ignore_no_formats=ignore_no_formats,)
+                    self.refresh_json, self.live_status = getUrls.get_Video_Info(id=id, wait=False, cookies=cookies, additional_options=additional_options, include_dash=include_dash, include_m3u8=include_m3u8, clean_info_dict=True, ignore_no_formats=ignore_no_formats, logger=logger)
                     self.last_refresh_attempt = time.monotonic()
 
                     # Remove unnecessary items for info.json used purely for url refresh
@@ -2481,6 +2483,7 @@ class DownloadStream:
                             include_dash=self.include_dash, 
                             include_m3u8=(self.include_m3u8 or self.force_m3u8),
                             ignore_no_formats=ignore_no_formats,
+                            logger=self.logger,
                         )
                         state['result'] = (info_dict, live_status)
 
@@ -2491,6 +2494,7 @@ class DownloadStream:
                             include_dash=self.include_dash, 
                             include_m3u8=(self.include_m3u8 or self.force_m3u8),
                             ignore_no_formats=ignore_no_formats,
+                            logger=self.logger,
                         )
                         state['result'] = (info_dict, live_status)
                 except Exception as e:
@@ -2530,7 +2534,7 @@ class DownloadStream:
                     self.live_status = live_status
                 
                 resolution = "(bv/ba/best)[format_id~='^{0}(?:-.*)?$'][protocol={1}]".format(self.stream_url.itag, self.stream_url.protocol)
-                stream_url = YoutubeURL.Formats().getFormatURL(info_json=info_dict, resolution=resolution, sort=self.yt_dlp_sort, include_dash=self.include_dash, include_m3u8=self.include_m3u8, force_m3u8=self.force_m3u8, stream_type=self.type) 
+                stream_url = YoutubeURL.Formats().getFormatURL(info_json=info_dict, resolution=resolution, sort=self.yt_dlp_sort, include_dash=self.include_dash, include_m3u8=self.include_m3u8, force_m3u8=self.force_m3u8, stream_type=self.type, logger=self.logger) 
                 
                 if stream_url is not None:
                     self.stream_url = stream_url

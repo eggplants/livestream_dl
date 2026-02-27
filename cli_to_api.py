@@ -1,8 +1,13 @@
+#!/usr/bin/env python3
+
+# Allow direct execution
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import yt_dlp
 import yt_dlp.options
-
-# Taken from https://github.com/yt-dlp/yt-dlp/blob/master/devscripts/cli_to_api.py
-# Update from yt-dlp repository if it no longer works
 
 create_parser = yt_dlp.options.create_parser
 
@@ -37,3 +42,10 @@ def cli_to_api(opts, cli_defaults=False):
     return diff
 
 
+if __name__ == '__main__':
+    from pprint import pprint
+
+    print('\nThe arguments passed translate to:\n')
+    pprint(cli_to_api(sys.argv[1:]))
+    print('\nCombining these with the CLI defaults gives:\n')
+    pprint(cli_to_api(sys.argv[1:], True))
