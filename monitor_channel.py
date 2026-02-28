@@ -41,22 +41,22 @@ def get_upcoming_or_live_videos(channel_id, tab=None, options={}, logger: loggin
                 elif channel_id.startswith("UC") or channel_id.startswith("UU"):
                     url = "https://www.youtube.com/playlist?list={0}".format("UUMO" + channel_id[2:])
                 else:
-                    ydl_opts.update({'playlist_items': '1:10'})
+                    #ydl_opts.update({'playlist_items': '1:10'})
                     url = "https://www.youtube.com/channel/{0}/{1}".format(channel_id, tab)
                     
             elif tab == "streams":
                 if channel_id.startswith("UU"):
                     url = "https://www.youtube.com/playlist?list={0}".format(channel_id)
-                elif channel_id.startswith("UC"):
-                    url = "https://www.youtube.com/playlist?list={0}".format("UU" + channel_id[2:])
                 elif channel_id.startswith("UUMO"):
                     url = "https://www.youtube.com/playlist?list={0}".format("UU" + channel_id[4:])
+                elif channel_id.startswith("UC") and options.get("use_stream_tab", False):
+                    url = "https://www.youtube.com/playlist?list={0}".format("UU" + channel_id[2:])
                 else:
-                    ydl_opts.update({'playlist_items': '1:10'})
+                    #ydl_opts.update({'playlist_items': '1:10'})
                     url = "https://www.youtube.com/channel/{0}/{1}".format(channel_id, tab)
                     
             else:
-                ydl_opts.update({'playlist_items': '1:10'})
+                #ydl_opts.update({'playlist_items': '1:10'})
                 url = "https://www.youtube.com/channel/{0}/{1}".format(channel_id, tab)
                 
             info = ydl.extract_info(url, download=False)

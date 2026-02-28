@@ -217,7 +217,7 @@ def get_Video_Info(
         skip_list.append("hls")
 
     if wait is False:
-        ydl_opts.pop('wait_for_video', None)
+        ydl_opts['wait_for_video'] = None
 
     info_dict = {}    
 

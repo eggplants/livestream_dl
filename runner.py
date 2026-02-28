@@ -327,6 +327,8 @@ if __name__ == "__main__":
 
     monitor_group.add_argument('--members-only', action='store_true', help="Monitor 'Members Only' playlist for streams instead of 'Streams' playlist. Requires cookies.")
 
+    monitor_group.add_argument('--use-stream-tab', action='store_true', help='Use "Streams" tab instead of user upload playlist.')
+
     monitor_group.add_argument('--upcoming-lookahead', type=int, default=24, help="Maximum time (in hours) to start a downloader instance for a video.")
 
     monitor_group.add_argument('--playlist-items', type=int, default=50, help="Maximum number of playlist items to check.")
