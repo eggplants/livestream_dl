@@ -81,15 +81,6 @@ class MyLogger:
     def error(self, msg):
         self.logger.error(msg)
         
-    def reset_retry_state(self):
-        self.should_retry = False
-        self.retry_message = None
-        
-    def get_wait_time(self):
-        """Calculate wait time with jitter"""
-        jitter = random.uniform(-0.2, 0.2)  # ±20% jitter
-        wait_time = self.base_wait * (1 + jitter)
-        return wait_time
 
 # --- Custom Exceptions ---
 class VideoInaccessibleError(PermissionError): pass
@@ -119,25 +110,6 @@ def parse_wait(string) -> Tuple[int, Optional[int]]:
             return (int(string), None)
     except ValueError:
         raise argparse.ArgumentTypeError(f"'{string}' must be an integer or 'min:max'")
-
-def _handle_retry_wait(logger, yt_dlpLogger, current_try, max_retries, extraction_event):
-    """Helper function to handle the sleep logic to avoid code duplication"""
-    wait_time = yt_dlpLogger.get_wait_time()
-    
-    if current_try >= max_retries:
-        error_msg = f"[Live stream offline status] Maximum retry attempts {max_retries} exceeded."
-        logger.error(error_msg)
-        raise MaxRetryExceededError(error_msg)
-    
-    logger.warning(f"Live stream not ready. Waiting {wait_time:.2f}s. Attempt {current_try}/{max_retries}")
-    
-    # Segmented waiting
-    end_time = time.time() + wait_time
-    while time.time() < end_time:
-        if extraction_event.is_set():
-            logger.warning("extraction_event was set, interrupting wait")
-            break
-        time.sleep(1)
 
 def get_Video_Info(
     id: str, 
@@ -267,7 +239,7 @@ def get_Video_Info(
                 raise LivestreamError("Livestream has ended")   
             elif "terminated" in err_str:
                 raise VideoInaccessibleError(f"Video {id} has been terminated")
-            elif "country" in err_str and ("not available" in err_str or "uploader has not made" in err_str):
+            elif "country" in err_str and ("not available" in err_str or "uploader has not made" in err_str or "blocked" in err_str):
                 raise VideoInaccessibleError("Video is region-locked (Geo-restricted)")                
             elif "sign in to confirm your age" in err_str or "age-restricted" in err_str:
                 raise VideoInaccessibleError("Video is age-restricted and requires valid cookies")
