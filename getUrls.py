@@ -19,7 +19,34 @@ extraction_event = threading.Event()
 
 class MyLogger:
     repeat_threshold = 10
-    def __init__(self, logger: logging.Logger, wait = True):
+    
+    # --- Configuration Lists (Static) ---
+    # Log as INFO, then raise DownloadError
+    INFO_RAISE_KEYWORDS = [
+        "private", "sign in", "no longer live", "is not currently live",
+    ]
+
+    # Log as INFO, does not need raising
+    INFO_IGNORE_KEYWORDS = [
+        "this live event will begin in", "premieres in"
+    ]
+
+    # Log as WARNING, then raise DownloadError
+    WARNING_RAISE_KEYWORDS = [
+        "members", "premium", "live stream recording is not available",
+        "removed by the uploader", "copyright claim", "age-restricted", 
+        "confirm your age", "video has been removed", "country", 
+        "not available", "uploader has not made", "blocked", "unavailable",
+    ]
+
+    # Log as ERROR, then raise DownloadError
+    ERROR_RAISE_KEYWORDS = [
+        "http error 429", "confirm you're not a bot", "captcha",
+        "not available on this app", "terminated", 
+        "incomplete youtube id", "invalid video id"
+    ]
+
+    def __init__(self, logger: logging.Logger, wait=True):
         self.logger = logger
         self.wait = wait
         self.warning_history = deque(maxlen=self.repeat_threshold)
@@ -32,50 +59,39 @@ class MyLogger:
                 self.info(msg)
 
     def info(self, msg):
-        msg_str = str(msg)
-         
-        # Check for specific warnings that require retry
-        if ("should already be available" in msg_str.lower() or 
-            "release time of video is not known" in msg_str.lower()):
-            self.should_retry = True
-            self.retry_message = msg_str
-            self.logger.warning(f"Detected warning requiring retry: {msg_str}")
-        else:
-            self.logger.log(VERBOSE_LEVEL_NUM, msg)
+        self.logger.log(VERBOSE_LEVEL_NUM, msg)
 
     def warning(self, msg):
-        msg_str = str(msg).lower()   
+        msg_str = str(msg).lower()
+        
         if not self.wait and not ("[pot:bgutil:http]" in msg_str):
-            self.warning_history.append(msg_str)    
+            self.warning_history.append(msg_str)
 
-        # --- RETRYABLE TECHNICAL ERRORS ---
-        # These occur when a stream is starting but CDN isn't ready
-        if ("private" in msg_str or "unavailable" in msg_str):
-            self.logger.info(msg_str)
-            raise yt_dlp.utils.DownloadError("Private video. Sign in if you've been granted access to this video")
-        elif "http error 429" in msg_str:
-            self.logger.error(msg)
-            raise yt_dlp.utils.DownloadError("HTTP Error 429: Too Many Requests")
-        elif "live stream recording is not available" in msg_str or "removed by the uploader" in msg_str or "blocked" in msg_str:
-            self.logger.warning(msg)
-            raise yt_dlp.utils.DownloadError(msg_str)
-        elif "video is no longer live" in msg_str:
-            self.logger.info(msg_str)
-            raise yt_dlp.utils.DownloadError("Video is no longer live")
-        elif "this live event will begin in" in msg_str or "premieres in" in msg_str:
+        # 1. Check Info-Level Keywords
+        if any(k in msg_str for k in self.INFO_IGNORE_KEYWORDS):
             self.logger.info(msg)
-        elif "not available on this app" in msg_str:
+            return # Don't raise, just log
+        
+        if any(k in msg_str for k in self.INFO_RAISE_KEYWORDS):
+            self.logger.info(msg)
+            raise yt_dlp.utils.DownloadError(msg_str)
+
+        # 2. Check Warning-Level Keywords
+        if any(k in msg_str for k in self.WARNING_RAISE_KEYWORDS):
+            self.logger.warning(msg)
+            raise yt_dlp.utils.DownloadError(msg_str)
+
+        # 3. Check Error-Level Keywords
+        if any(k in msg_str for k in self.ERROR_RAISE_KEYWORDS):
             self.logger.error(msg)
             raise yt_dlp.utils.DownloadError(msg_str)
-        elif "should already be available" in msg_str:
-            self.should_retry = True
-            self.retry_message = msg_str
-            self.logger.warning(f"Live stream not fully available yet, will retry: {msg_str}")
-        else:
-            self.logger.warning(msg)
 
+        # Fallback
+        self.logger.warning(msg)
+
+        # Loop protection
         if not self.wait and len(self.warning_history) >= self.repeat_threshold and len(set(self.warning_history)) == 1:
-            self.logger.error("Repeated message detected: {0}".format(msg))
+            self.logger.error(f"Repeated message detected: {msg}")
             raise RepeatedWarningError(msg, self.repeat_threshold)
 
     def error(self, msg):
@@ -138,7 +154,7 @@ def get_Video_Info(
     
     # Base Options
     ydl_opts = {
-        'retries': 25, # Socket retries
+        'retries': 10, # Socket retries
         'skip_download': True,
         'cookiefile': cookies,
         'writesubtitles': True,
@@ -208,9 +224,6 @@ def get_Video_Info(
             for stream_format in info_dict.get('formats', []):
                 stream_format.pop('fragments', None)
             
-            # Reset retry state
-            yt_dlpLogger.reset_retry_state()
-            
             # Check live status
             live_status = info_dict.get('live_status')
             if live_status not in ['is_upcoming', 'is_live', 'post_live']:
@@ -225,26 +238,26 @@ def get_Video_Info(
             # Specific Error Handling
             if 'video is private' in err_str or "sign in" in err_str:
                 raise VideoInaccessibleError(f"Video {id} is private")
-            elif "http error 429" in err_str:
-                raise RateLimitException("HTTP Error 429: Too Many Requests")
-            elif 'will begin in' in err_str or 'premieres in' in err_str:
-                raise VideoUnavailableError("Video is not yet available")
-            elif "members" in err_str:
-                raise VideoInaccessibleError(f"Video {id} is a membership video")
+            elif "http error 429" in err_str or "confirm you're not a bot" in err_str or "captcha" in err_str:
+                raise RateLimitException("Rate limited or blocked by YouTube anti-bot measures")
+            elif "members" in err_str or "premium" in err_str:
+                raise VideoInaccessibleError(f"Video {id} is a membership or Premium video")
             elif "not available on this app" in err_str:
                 raise VideoInaccessibleError(f"Video {id} not available on this player")
             elif "live stream recording is not available" in err_str or "removed by the uploader" in err_str:
-                raise VideoInaccessibleError(f"This live stream recording is not available.")
+                raise VideoInaccessibleError("This live stream recording is not available.")
             elif "no longer live" in err_str:
-                raise LivestreamError("Livestream has ended")   
+                raise LivestreamError("Livestream has ended or channel is offline")   
             elif "terminated" in err_str:
                 raise VideoInaccessibleError(f"Video {id} has been terminated")
             elif "country" in err_str and ("not available" in err_str or "uploader has not made" in err_str or "blocked" in err_str):
                 raise VideoInaccessibleError("Video is region-locked (Geo-restricted)")                
             elif "sign in to confirm your age" in err_str or "age-restricted" in err_str:
                 raise VideoInaccessibleError("Video is age-restricted and requires valid cookies")
-            elif "video has been removed" in err_str:
-                raise VideoUnavailableError("Video has been removed/deleted")
+            elif "copyright claim" in err_str:
+                raise VideoUnavailableError("Video removed due to a copyright claim")
+            elif "video has been removed" in err_str or "incomplete youtube id" in err_str or "invalid video id" in err_str:
+                raise VideoUnavailableError("Video has been removed or ID is invalid")
             else:
                 raise e
         except RepeatedWarningError as e:
