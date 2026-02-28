@@ -2257,15 +2257,12 @@ class DownloadStream:
     # Function to insert a single segment without committing
     def insert_single_segment(self, segment_order, segment_data):
         self.conn.execute('''
-            INSERT INTO segments (id, segment_data) 
-            VALUES (?, ?) 
-            ON CONFLICT(id) 
-            DO UPDATE SET segment_data = CASE 
-                WHEN LENGTH(excluded.segment_data) > LENGTH(segments.segment_data) 
-                THEN excluded.segment_data 
-                ELSE segments.segment_data 
-            END;
-        ''', (segment_order, segment_data))
+                        INSERT INTO segments (id, segment_data) 
+                        VALUES (?, ?) 
+                        ON CONFLICT(id) DO UPDATE SET 
+                            segment_data = excluded.segment_data
+                        WHERE LENGTH(excluded.segment_data) > LENGTH(segments.segment_data);
+                    ''', (segment_order, segment_data))
 
     # Function to commit after a batch of inserts
     def commit_batch(self, conn=None):
