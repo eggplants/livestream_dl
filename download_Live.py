@@ -2169,6 +2169,7 @@ class DownloadStream:
         if not self.database_in_memory:
             conn.execute('PRAGMA journal_mode = WAL;')
             conn.execute('PRAGMA synchronous = NORMAL;')
+            conn.execute('PRAGMA temp_store = MEMORY;') # Likely minimal gains, but may help for loading the optimistic segment
             conn.execute('PRAGMA page_size = 32768;')
             conn.execute('PRAGMA mmap_size = 52428200;')
             conn.execute('PRAGMA cache_size = -4000;')
@@ -2195,48 +2196,45 @@ class DownloadStream:
         return conn
     
     def commit_segments(self, force=False):
-        if not self.pending_segments:
-            if force:
-                self.conn.commit()
-                if self.livestream_coordinator:
-                    self.livestream_coordinator.stats[self.type]["current_filesize"] = os.path.getsize(self.temp_db_file)
-        # If finished threads exceeds batch size, commit the whole batch of threads at once. 
-        # Has risk of not committing if a thread has no segment data, but this would be corrected naturally in following loop(s)
-        elif force or len(self.pending_segments) >= self.batch_size:
-            self.logger.debug("Writing segments to file...")
-            try:
-                # 1. SORT the batch by the segment ID (index 0 of the tuple)
-                # This keeps the B-Tree insertions linear and avoids page splits.
-                batch = sorted(self.pending_segments.items(), key=lambda kv: kv[0])
+        # Early exit if nothing to do and not forcing a sync
+        if not self.pending_segments and not force:
+            return
 
-                # 2. Use your specific UPSERT logic within executemany
-                sql = '''
-                    INSERT INTO segments (id, segment_data) 
-                    VALUES (?, ?) 
-                    ON CONFLICT(id) 
-                    DO UPDATE SET segment_data = CASE 
-                        WHEN LENGTH(excluded.segment_data) > LENGTH(segments.segment_data) 
-                        THEN excluded.segment_data 
-                        ELSE segments.segment_data 
-                    END;
-                '''
-                
-                self.conn.executemany(sql, batch)
-                # Micro-optimisation - unlikely to make a difference, but won't hurt
-                del batch
-                
-                self.conn.commit()
+        # Logic: Commit if we have enough data OR if we are forced
+        if len(self.pending_segments) >= self.batch_size or force:
+            if self.pending_segments:
+                self.logger.debug(f"Writing {len(self.pending_segments)} segments to file...")
+                try:
+                    # 1. Sort by ID for linear B-Tree insertion (avoids page splitting)
+                    batch = sorted(self.pending_segments.items())
 
-                # 3. Re-open transaction for the next batch (WAL mode optimization)
-                self.conn.execute('BEGIN TRANSACTION')
-                
-                # 4. Clear the buffer immediately to free RAM (important for video BLOBs)
-                self.pending_segments.clear()
-                
-            except Exception as e:
-                self.logger.exception(f"Batch insert failed:")
-                self.conn.rollback()
+                    # 2. Optimized UPSERT with WHERE clause
+                    # This is more efficient than a CASE statement because SQLite 
+                    # skips the update entirely if the condition isn't met.
+                    sql = '''
+                        INSERT INTO segments (id, segment_data) 
+                        VALUES (?, ?) 
+                        ON CONFLICT(id) DO UPDATE SET 
+                            segment_data = excluded.segment_data
+                        WHERE LENGTH(excluded.segment_data) > LENGTH(segments.segment_data);
+                    '''
+                    
+                    self.conn.executemany(sql, batch)
+                    self.pending_segments.clear()
+                    
+                except Exception as e:
+                    self.logger.exception("Batch insert failed:")
+                    self.conn.rollback()
+                    # Re-raise or handle as needed
+                    return 
 
+            # 3. Handle the physical commit
+            self.conn.commit()
+            
+            # 4. Immediate BEGIN for the next cycle (crucial for WAL performance)
+            self.conn.execute('BEGIN')
+
+            # 5. Update stats if coordinator exists
             if self.livestream_coordinator:
                 self.livestream_coordinator.stats[self.type]["current_filesize"] = os.path.getsize(self.temp_db_file)
 
@@ -2287,25 +2285,26 @@ class DownloadStream:
         
         should_clean = self.should_clean(self.ext)
 
+        # Use a large buffer for the file write to reduce syscalls
         with open(output_file, 'wb', buffering=1048576) as f:
-            
+            # 1. We don't need fetchmany if we iterate the cursor directly.
+            # Python's sqlite3 driver automatically fetches in chunks internally.
             cursor = self.conn.execute('SELECT segment_data FROM segments ORDER BY id')
-            chunk_size = max(self.batch_size*2, 3) # Number of rows to pull into RAM at once
+            
             is_first = True
-            while True:
-                rows = cursor.fetchmany(chunk_size)
-                if not rows:
-                    break
-                for (segment_data,) in rows:
-                    # 1. clean_segments returns a bytearray
-                    # 2. f.write consumes the bytearray directly
-                    if should_clean:
-                        piece = self.clean_segments(segment_data, first=is_first)
-                        f.write(piece)
-                    else:
-                        f.write(segment_data)
-                    
-                    is_first = False
+            
+            # 2. Iterate directly over the cursor to avoid building a massive 
+            # 'rows' list in Python memory.
+            for (segment_data,) in cursor:
+                if should_clean:
+                    # 3. Memoryview/Bytearray optimization: 
+                    # If clean_segments can work with memoryviews, it avoids copying BLOBs in RAM.
+                    piece = self.clean_segments(segment_data, first=is_first)
+                    f.write(piece)
+                else:
+                    f.write(segment_data)
+                
+                is_first = False
 
         if self.livestream_coordinator:
             self.livestream_coordinator.stats[self.type]['status'] = "merged"
@@ -2530,7 +2529,7 @@ class DownloadStream:
                 if self.detect_manifest_change(info_json=info_dict, follow_manifest=follow_manifest) is True:
                     return True
                 
-                if live_status is not None:
+                if live_status:
                     self.live_status = live_status
                 
                 resolution = "(bv/ba/best)[format_id~='^{0}(?:-.*)?$'][protocol={1}]".format(self.stream_url.itag, self.stream_url.protocol)
@@ -2553,15 +2552,20 @@ class DownloadStream:
                     self.info_dict = info_dict    
 
             except getUrls.VideoInaccessibleError as e:
+                error_msg = str(e).lower()
                 self.logger.warning("Video Inaccessible error: {0}".format(e))
-                if "membership" in str(e) and not self.is_403:
-                    self.logger.warning("{0} is now members only. Continuing until 403 errors")
-                    self.is_members_error = True
-                elif "recording is not available" in str(e) and not self.is_403:
-                    self.logger.warning("Recording is not available, marking as post-live")
-                    self.live_status = "post_live"
-                else:
+                if "private" in error_msg or self.is_403:
+                    self.logger.warning("{0} is Inaccessible and is either private or experiencing 403 errors. Marking as private.")
                     self.is_private = True
+                elif "membership" in error_msg or "premium" in error_msg:
+                    self.logger.warning("{0} is now members only or premium. Continuing until 403 errors")
+                    self.is_members_error = True
+                else:
+                    if "recording is not available" in error_msg:
+                        self.logger.warning("Recording is not available, marking as post-live")
+                    else:
+                        self.logger.warning("Stream is inaccessible but not encountering 403 errors. Marking as post-live.")
+                    self.live_status = "post_live"
             except getUrls.VideoUnavailableError as e:
                 self.logger.critical("Video Unavailable error: {0}".format(e))
                 if self.get_expire_time(self.stream_url) < time.time():
@@ -2571,13 +2575,9 @@ class DownloadStream:
                 self.logger.exception("Error refreshing URL: {0}".format(e))
                 self.logger.info("Livestream has ended and processed.")
                 self.live_status = "was_live"
-                self.url_checked = time.time()
-                return False
             except getUrls.LivestreamError:
                 self.logger.debug("Livestream has ended.")
                 self.live_status = "post_live"
-                self.url_checked = time.time()
-                return False 
             except Exception as e:
                 self.logger.exception("Error: {0}".format(e))                 
                 

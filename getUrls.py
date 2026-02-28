@@ -241,7 +241,7 @@ def get_Video_Info(
             elif "http error 429" in err_str or "confirm you're not a bot" in err_str or "captcha" in err_str:
                 raise RateLimitException("Rate limited or blocked by YouTube anti-bot measures")
             elif "members" in err_str or "premium" in err_str:
-                raise VideoInaccessibleError(f"Video {id} is a membership or Premium video")
+                raise VideoInaccessibleError(f"Video {id} is a membership or premium video")
             elif "not available on this app" in err_str:
                 raise VideoInaccessibleError(f"Video {id} not available on this player")
             elif "live stream recording is not available" in err_str or "removed by the uploader" in err_str:
