@@ -56,7 +56,7 @@ class MyLogger:
         elif "http error 429" in msg_str:
             self.logger.error(msg)
             raise yt_dlp.utils.DownloadError("HTTP Error 429: Too Many Requests")
-        elif "live stream recording is not available" in msg_str or "removed by the uploader" in msg_str:
+        elif "live stream recording is not available" in msg_str or "removed by the uploader" in msg_str or "blocked" in msg_str:
             self.logger.warning(msg)
             raise yt_dlp.utils.DownloadError(msg_str)
         elif "video is no longer live" in msg_str:
