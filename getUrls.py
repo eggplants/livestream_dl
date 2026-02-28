@@ -74,7 +74,7 @@ class MyLogger:
         else:
             self.logger.warning(msg)
 
-        if not self.wait and len(self.history) >= self.repeat_threshold and len(set(self.history)) == 1:
+        if not self.wait and len(self.warning_history) >= self.repeat_threshold and len(set(self.warning_history)) == 1:
             self.logger.error("Repeated message detected: {0}".format(msg))
             raise RepeatedWarningError(msg, self.repeat_threshold)
 
