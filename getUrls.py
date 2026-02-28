@@ -17,7 +17,7 @@ except ModuleNotFoundError:
 
 extraction_event = threading.Event()
 
-class MyLogger:
+class ExtractionLogger:
     repeat_threshold = 10
     
     # --- Configuration Lists (Static) ---
@@ -150,7 +150,7 @@ def get_Video_Info(
     url = str(id) # Assuming ID might be passed, usually complete URL or ID is handled by yt-dlp
     
     # Initialize custom logger with the passed retry limit
-    yt_dlpLogger = MyLogger(logger=logger, wait=True)
+    yt_dlpLogger = ExtractionLogger(logger=logger, wait=True)
     
     # Base Options
     ydl_opts = {
@@ -160,7 +160,7 @@ def get_Video_Info(
         'writesubtitles': True,
         'subtitlesformat': 'json',
         'subtitleslangs': ['live_chat'],
-        #'logger': yt_dlpLogger,
+        'logger': yt_dlpLogger,
         'ignore_no_formats_error': ignore_no_formats,
     }
 
